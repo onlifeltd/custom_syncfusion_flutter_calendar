@@ -12865,8 +12865,11 @@ class _CurrentTimeIndicator extends CustomPainter {
   final bool isRTL;
   final String timeZone;
 
+
   @override
   void paint(Canvas canvas, Size size) {
+    const double horizontalShiftPercentage = -0.05;
+
     final DateTime now = DateTime.now();
     final int hours = now.hour;
     final int minutes = now.minute;
@@ -12910,20 +12913,67 @@ class _CurrentTimeIndicator extends CustomPainter {
             minutes: getLocationDateTime.minute),
         timeSlotViewSettings,
         minuteHeight);
-    final Paint painter = Paint()
+    final Paint linePainter = Paint()
       ..color = todayHighlightColor!
       ..strokeWidth = 1
       ..isAntiAlias = true
       ..style = PaintingStyle.fill;
+
+    final String currentTimeText =
+        '${getLocationDateTime.hour.toString().padLeft(2, '0')}:${getLocationDateTime.minute.toString().padLeft(2, '0')}';
+
+    final TextPainter textPainter = TextPainter(
+      text: TextSpan(
+        text: currentTimeText,
+        style: const TextStyle(
+          color: Colors.white, // Белый текст
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+
+    const double padding = 6.0;
+    final double rectWidth = textPainter.width + padding * 2;
+    final double rectHeight = textPainter.height + padding;
+
     if (isTimelineView) {
       final double viewSize = size.width / visibleDates.length;
       double startXPosition = (index * viewSize) + currentTimePosition;
+      startXPosition += size.width * horizontalShiftPercentage;
+
       if (isRTL) {
         startXPosition = size.width - startXPosition;
       }
-      canvas.drawCircle(Offset(startXPosition, 5), 5, painter);
-      canvas.drawLine(Offset(startXPosition, 0),
-          Offset(startXPosition, size.height), painter);
+
+      final Rect rect = Rect.fromCenter(
+        center: Offset(startXPosition, 5), // Центр линии
+        width: rectWidth,
+        height: rectHeight,
+      );
+      final Paint rectPainter = Paint()
+        ..color = Colors.red
+        ..style = PaintingStyle.fill;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, const Radius.circular(8.0)),
+        rectPainter,
+      );
+      canvas.drawLine(
+        Offset(startXPosition, 0),
+        Offset(startXPosition, size.height),
+        linePainter,
+      );
+      textPainter.paint(
+        canvas,
+        Offset(
+          startXPosition - textPainter.width / 2,
+          5 - textPainter.height / 2,
+        ),
+      );
+
+
     } else {
       final double viewSize =
           (size.width - timeRulerSize) / visibleDates.length;
@@ -12931,16 +12981,41 @@ class _CurrentTimeIndicator extends CustomPainter {
       double viewStartPosition = (index * viewSize) + timeRulerSize;
       double viewEndPosition = viewStartPosition + viewSize;
       double startXPosition = viewStartPosition < 5 ? 5 : viewStartPosition;
+      startXPosition += size.width * horizontalShiftPercentage;
+
       if (isRTL) {
         viewStartPosition = size.width - viewStartPosition;
         viewEndPosition = size.width - viewEndPosition;
         startXPosition = size.width - startXPosition;
       }
-      canvas.drawCircle(Offset(startXPosition, startYPosition), 5, painter);
-      canvas.drawLine(Offset(viewStartPosition, startYPosition),
-          Offset(viewEndPosition, startYPosition), painter);
+
+      final Rect rect = Rect.fromCenter(
+        center: Offset(startXPosition, startYPosition), // Центр прямоугольника на линии
+        width: rectWidth,
+        height: rectHeight,
+      );
+      final Paint rectPainter = Paint()
+        ..color = Colors.red
+        ..style = PaintingStyle.fill;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(rect, const Radius.circular(8.0)),
+        rectPainter,
+      );
+      canvas.drawLine(
+        Offset(viewStartPosition, startYPosition),
+        Offset(viewEndPosition, startYPosition),
+        linePainter,
+      );
+      textPainter.paint(
+        canvas,
+        Offset(
+          startXPosition - textPainter.width / 2,
+          startYPosition - textPainter.height / 2,
+        ),
+      );
     }
   }
+
 
   @override
   bool? hitTest(Offset position) {
