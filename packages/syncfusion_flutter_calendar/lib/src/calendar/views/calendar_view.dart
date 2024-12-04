@@ -12919,8 +12919,6 @@ class _CurrentTimeIndicator extends CustomPainter {
       ..isAntiAlias = true
       ..style = PaintingStyle.fill;
 
-    // final String currentTimeText =
-    //     '${getLocationDateTime.hour.toString().padLeft(2, '0')}:${getLocationDateTime.minute.toString().padLeft(2, '0')}';
     final String currentTimeText =
         '${(getLocationDateTime.hour % 12 == 0 ? 12 : getLocationDateTime.hour % 12).toString()}:${getLocationDateTime.minute.toString().padLeft(2, '0')}';
 
