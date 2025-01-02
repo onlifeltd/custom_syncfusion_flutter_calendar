@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
+import 'package:syncfusion_flutter_calendar/src/calendar/views/calendar_view.dart';
 
 import '../../../calendar.dart';
 import 'calendar_view_helper.dart';
@@ -131,13 +132,19 @@ class CalendarValueChangedNotifier with Diagnosticable {
 ///}
 /// ```
 class CalendarController extends CalendarValueChangedNotifier {
+  CalendarController() {
+    // Add a listener to synchronize with scrollOffsetY
+    scrollOffsetY.addListener(() {
+      _getScrollOffset = scrollOffsetY.value;
+    });
+  }
   DateTime? _selectedDate;
   DateTime? _displayDate;
   CalendarView? _view;
-
+  double? _getScrollOffset;
   /// The selected date in the [SfCalendar].
   DateTime? get selectedDate => _selectedDate;
-
+  double? get getScrollOffset => _getScrollOffset;
   /// Selects the given date programmatically in the [SfCalendar] by
   /// checking that the date falls in between the minimum and maximum date range
   ///
@@ -168,6 +175,7 @@ class CalendarController extends CalendarValueChangedNotifier {
   ///  }
   ///}
   /// ```
+  ///
   set selectedDate(DateTime? date) {
     if (CalendarViewHelper.isSameTimeSlot(_selectedDate, date)) {
       return;

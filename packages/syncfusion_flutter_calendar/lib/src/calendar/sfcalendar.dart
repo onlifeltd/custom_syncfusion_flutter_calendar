@@ -8521,7 +8521,8 @@ class _SfCalendarState extends State<SfCalendar>
       double width,
       double height,
       double agendaHeight) {
-    return Positioned(
+    return
+      Positioned(
       top: top,
       left: isResourceEnabled && !isRTL ? resourceViewSize : 0,
       right: isResourceEnabled && isRTL ? resourceViewSize : 0,

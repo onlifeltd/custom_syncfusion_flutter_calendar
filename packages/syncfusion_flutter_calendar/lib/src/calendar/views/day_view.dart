@@ -329,6 +329,7 @@ class _TimeSlotRenderWidget extends MultiChildRenderObjectWidget {
 
   @override
   _TimeSlotRenderObject createRenderObject(BuildContext context) {
+
     return _TimeSlotRenderObject(
         visibleDates,
         horizontalLinesCount,
