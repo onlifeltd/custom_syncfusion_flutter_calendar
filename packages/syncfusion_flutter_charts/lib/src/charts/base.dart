@@ -318,7 +318,7 @@ class RenderChartArea extends RenderBox
   bool get validForMouseTracker => _validForMouseTracker;
 
   @override
-  MouseCursor get cursor => SystemMouseCursors.basic;
+  MouseCursor get cursor => MouseCursor.defer;
 
   @override
   PointerEnterEventListener? get onEnter => _handlePointerEnter;
@@ -446,6 +446,27 @@ class RenderChartArea extends RenderBox
     return isHit;
   }
 
+  bool _isDoubleTapGesture() {
+    if (_plotArea != null) {
+      final TooltipBehavior? tooltipBehavior = _plotArea!.tooltipBehavior;
+      final bool isSelection =
+          _plotArea!.selectionGesture == ActivationMode.doubleTap;
+      final bool isTooltip = tooltipBehavior != null &&
+          tooltipBehavior.enable &&
+          tooltipBehavior.activationMode == ActivationMode.doubleTap;
+      final bool isTrackball = trackballBehavior != null &&
+          trackballBehavior!.enable &&
+          trackballBehavior!.activationMode == ActivationMode.doubleTap;
+      final bool isCrosshair = crosshairBehavior != null &&
+          crosshairBehavior!.enable &&
+          crosshairBehavior!.activationMode == ActivationMode.doubleTap;
+      final bool isZoom =
+          zoomPanBehavior != null && zoomPanBehavior!.enableDoubleTapZooming;
+      return isSelection || isTooltip || isTrackball || isCrosshair || isZoom;
+    }
+    return false;
+  }
+
   @override
   @nonVirtual
   void handleEvent(PointerEvent event, BoxHitTestEntry entry) {
@@ -456,7 +477,9 @@ class RenderChartArea extends RenderBox
     if (event is PointerDownEvent) {
       _pointerCount++;
       _tapGestureRecognizer?.addPointer(event);
-      _doubleTapGestureRecognizer?.addPointer(event);
+      if (_isDoubleTapGesture()) {
+        _doubleTapGestureRecognizer?.addPointer(event);
+      }
       _longPressGestureRecognizer?.addPointer(event);
       _horizontalDragGestureRecognizer?.addPointer(event);
       _verticalDragGestureRecognizer?.addPointer(event);
@@ -485,7 +508,7 @@ class RenderChartArea extends RenderBox
   }
 
   bool _isCartesianAxesHit(Offset globalPosition) {
-    if (_cartesianAxes != null) {
+    if (_cartesianAxes != null && attached) {
       return true;
     }
     return false;
@@ -500,7 +523,7 @@ class RenderChartArea extends RenderBox
   }
 
   bool _isBehaviorAreaHit(Offset globalPosition) {
-    if (_behaviorArea != null) {
+    if (_behaviorArea != null && attached) {
       return true;
     }
     return false;
@@ -508,6 +531,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handlePointerEnter(PointerEnterEvent details) {
+    if (!attached) {
+      return;
+    }
     if (_isBehaviorAreaHit(details.position)) {
       _behaviorArea!.handlePointerEnter(details);
     }
@@ -515,6 +541,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handlePointerDown(PointerDownEvent details) {
+    if (!attached) {
+      return;
+    }
     onChartTouchInteractionDown?.call(ChartTouchInteractionArgs()
       ..position = globalToLocal(details.position));
     if (_isPlotAreaHit(details.position)) {
@@ -528,12 +557,18 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handlePointerMove(PointerMoveEvent details) {
+    if (!attached) {
+      return;
+    }
     onChartTouchInteractionMove?.call(ChartTouchInteractionArgs()
       ..position = globalToLocal(details.position));
   }
 
   @protected
   void _handlePointerHover(PointerHoverEvent details) {
+    if (!attached) {
+      return;
+    }
     if (_isCartesianAxesHit(details.position)) {
       _cartesianAxes?.visitChildren((RenderObject child) {
         if (child is RenderChartAxis) {
@@ -557,6 +592,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handlePointerUp(PointerUpEvent details) {
+    if (!attached) {
+      return;
+    }
     onChartTouchInteractionUp?.call(ChartTouchInteractionArgs()
       ..position = globalToLocal(details.position));
     if (_isPlotAreaHit(details.position)) {
@@ -570,6 +608,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handlePointerExit(PointerExitEvent details) {
+    if (!attached) {
+      return;
+    }
     if (_isBehaviorAreaHit(details.position)) {
       _behaviorArea?.handlePointerExit(details);
     }
@@ -577,6 +618,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handleLongPressStart(LongPressStartDetails details) {
+    if (!attached) {
+      return;
+    }
     if (_isPlotAreaHit(details.globalPosition)) {
       _plotArea!.isTooltipActivated = false;
       RenderBox? child = _plotArea?.lastChild;
@@ -596,6 +640,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handleLongPressMoveUpdate(LongPressMoveUpdateDetails details) {
+    if (!attached) {
+      return;
+    }
     if (_isBehaviorAreaHit(details.globalPosition)) {
       _behaviorArea?.handleLongPressMoveUpdate(details);
     }
@@ -603,6 +650,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handleLongPressEnd(LongPressEndDetails details) {
+    if (!attached) {
+      return;
+    }
     if (_isBehaviorAreaHit(details.globalPosition)) {
       _behaviorArea?.handleLongPressEnd(details);
     }
@@ -610,6 +660,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handleTapDown(TapDownDetails details) {
+    if (!attached) {
+      return;
+    }
     if (_isBehaviorAreaHit(details.globalPosition)) {
       _behaviorArea?.handleTapDown(details);
     }
@@ -617,6 +670,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handleTapUp(TapUpDetails details) {
+    if (!attached) {
+      return;
+    }
     if (_isCartesianAxesHit(details.globalPosition)) {
       _cartesianAxes?.visitChildren((RenderObject child) {
         if (child is RenderChartAxis) {
@@ -642,12 +698,15 @@ class RenderChartArea extends RenderBox
   }
 
   void _handleDoubleTapDown(TapDownDetails details) {
+    if (!attached) {
+      return;
+    }
     _doubleTapPosition = details.globalPosition;
   }
 
   @protected
   void _handleDoubleTap() {
-    if (_doubleTapPosition == null) {
+    if (_doubleTapPosition == null || !attached) {
       return;
     }
     if (_isPlotAreaHit(_doubleTapPosition!)) {
@@ -669,11 +728,17 @@ class RenderChartArea extends RenderBox
   }
 
   void _handleDoubleTapCancel() {
+    if (!attached) {
+      return;
+    }
     _doubleTapPosition = null;
   }
 
   @protected
   void _handleScaleStart(ScaleStartDetails details) {
+    if (!attached) {
+      return;
+    }
     if (_isBehaviorAreaHit(details.focalPoint)) {
       _isScaled = true;
       _behaviorArea?.handleScaleStart(details);
@@ -682,6 +747,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handleScaleUpdate(ScaleUpdateDetails details) {
+    if (!attached) {
+      return;
+    }
     if (_isPlotAreaHit(details.focalPoint)) {
       _plotArea?.visitChildren((RenderObject child) {
         if (child is ChartSeriesRenderer) {
@@ -697,6 +765,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handleScaleEnd(ScaleEndDetails details) {
+    if (!attached) {
+      return;
+    }
     if (_isScaled) {
       _isScaled = false;
       _behaviorArea?.handleScaleEnd(details);
@@ -705,6 +776,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handleHorizontalDragStart(DragStartDetails details) {
+    if (!attached) {
+      return;
+    }
     if (_isBehaviorAreaHit(details.globalPosition)) {
       _isPanned = true;
       _behaviorArea!.handleHorizontalDragStart(details);
@@ -713,6 +787,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handleHorizontalDragUpdate(DragUpdateDetails details) {
+    if (!attached) {
+      return;
+    }
     if (_isBehaviorAreaHit(details.globalPosition)) {
       _isPanned = true;
       _behaviorArea!.handleHorizontalDragUpdate(details);
@@ -721,6 +798,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handleHorizontalDragEnd(DragEndDetails details) {
+    if (!attached) {
+      return;
+    }
     if (_isPanned) {
       _isPanned = false;
       _behaviorArea!.handleHorizontalDragEnd(details);
@@ -729,6 +809,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handleVerticalDragStart(DragStartDetails details) {
+    if (!attached) {
+      return;
+    }
     if (_isBehaviorAreaHit(details.globalPosition)) {
       _isPanned = true;
       _behaviorArea!.handleVerticalDragStart(details);
@@ -737,6 +820,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handleVerticalDragUpdate(DragUpdateDetails details) {
+    if (!attached) {
+      return;
+    }
     if (_isBehaviorAreaHit(details.globalPosition)) {
       _isPanned = true;
       _behaviorArea!.handleVerticalDragUpdate(details);
@@ -745,6 +831,9 @@ class RenderChartArea extends RenderBox
 
   @protected
   void _handleVerticalDragEnd(DragEndDetails details) {
+    if (!attached) {
+      return;
+    }
     if (_isPanned) {
       _isPanned = false;
       _behaviorArea!.handleVerticalDragEnd(details);
@@ -1288,7 +1377,7 @@ class RenderChartPlotArea extends RenderStack with ChartAreaUpdateMixin {
     int index = 0;
     final List<LegendItem> legendItems = <LegendItem>[];
     visitChildren((RenderObject child) {
-      final LegendItemProvider provider = child as LegendItemProvider;
+      final LegendItemProviderMixin provider = child as LegendItemProviderMixin;
       final List<LegendItem>? items = provider.buildLegendItems(index);
       if (items != null) {
         legendItems.addAll(items);
@@ -1654,7 +1743,7 @@ class RenderCartesianChartPlotArea extends RenderChartPlotArea {
           sbs = renderer;
         }
 
-        if (sbs != null) {
+        if (sbs != null && sbs.dataCount > 0) {
           maxWidth = maxWidth > sbs.width ? maxWidth : sbs.width;
           minDiff = min(sbs.primaryAxisAdjacentDataPointsMinDiff, minDiff);
         }
@@ -2129,15 +2218,27 @@ class RenderCartesianAxes extends RenderBox
       topAxesHeight = 0;
       bottomAxesHeight = 0;
       for (final RenderChartAxis axis in horizontalAxes) {
+        final double extent = axis.labelsExtent ?? spaceBetweenMultipleAxes;
         final CartesianAxesParentData childParentData =
             axis.parentData! as CartesianAxesParentData;
         childParentData.isResized = hasSize && size != constraints.biggest;
         axis.layout(horizontalAxesConstraints, parentUsesSize: true);
         if (axis.crossesAt == null || !axis.placeLabelsNearAxisLine) {
+          final double axisHeight = axis.size.height;
           if (axis.opposedPosition) {
-            topAxesHeight += axis.size.height;
+            topAxesHeight += axisHeight;
+            // Apply the padding(gap) between the multiple axes.
+            if (axis.isVisible &&
+                (topAxesHeight > axisHeight || axis.labelsExtent != null)) {
+              topAxesHeight += extent;
+            }
           } else {
-            bottomAxesHeight += axis.size.height;
+            bottomAxesHeight += axisHeight;
+            // Apply the padding(gap) between the multiple axes.
+            if (axis.isVisible &&
+                (bottomAxesHeight > axisHeight || axis.labelsExtent != null)) {
+              bottomAxesHeight += extent;
+            }
           }
         }
       }
@@ -2148,15 +2249,27 @@ class RenderCartesianAxes extends RenderBox
       leftAxesWidth = 0;
       rightAxesWidth = 0;
       for (final RenderChartAxis axis in verticalAxes) {
+        final double extent = axis.labelsExtent ?? spaceBetweenMultipleAxes;
         final CartesianAxesParentData childParentData =
             axis.parentData! as CartesianAxesParentData;
         childParentData.isResized = hasSize && size != constraints.biggest;
         axis.layout(verticalAxesConstraints, parentUsesSize: true);
         if (axis.crossesAt == null || !axis.placeLabelsNearAxisLine) {
+          final double axisWidth = axis.size.width;
           if (axis.opposedPosition) {
-            rightAxesWidth += axis.size.width;
+            rightAxesWidth += axisWidth;
+            // Apply the padding(gap) between the multiple axes.
+            if (axis.isVisible &&
+                (rightAxesWidth > axisWidth || axis.labelsExtent != null)) {
+              rightAxesWidth += extent;
+            }
           } else {
-            leftAxesWidth += axis.size.width;
+            leftAxesWidth += axisWidth;
+            // Apply the padding(gap) between the multiple axes.
+            if (axis.isVisible &&
+                (leftAxesWidth > axisWidth || axis.labelsExtent != null)) {
+              leftAxesWidth += extent;
+            }
           }
         }
       }
@@ -2188,20 +2301,24 @@ class RenderCartesianAxes extends RenderBox
     );
     measureVerticalAxes(verticalAxisConstraints);
 
-    final Rect plotAreaBounds = Rect.fromLTWH(
+    final Rect newPlotAreaBounds = Rect.fromLTWH(
       leftAxesWidth,
       topAxesHeight,
       horizontalAxisConstraints.maxWidth,
       verticalAxisConstraints.maxHeight,
     );
-    plotAreaOffset = plotAreaBounds.topLeft;
+    plotAreaOffset = newPlotAreaBounds.topLeft;
     _plotAreaConstraints = BoxConstraints(
-      maxWidth: plotAreaBounds.width,
-      maxHeight: plotAreaBounds.height,
+      maxWidth: newPlotAreaBounds.width,
+      maxHeight: newPlotAreaBounds.height,
     );
 
-    _arrangeVerticalAxes(plotAreaBounds, verticalAxes);
-    _arrangeHorizontalAxes(plotAreaBounds, horizontalAxes);
+    if (!plotAreaBounds.isEmpty && newPlotAreaBounds != plotAreaBounds) {
+      plotAreaBounds = newPlotAreaBounds;
+    }
+
+    _arrangeVerticalAxes(newPlotAreaBounds, verticalAxes);
+    _arrangeHorizontalAxes(newPlotAreaBounds, horizontalAxes);
     size = constraints.biggest;
     performPostLayout();
   }
@@ -2214,6 +2331,7 @@ class RenderCartesianAxes extends RenderBox
       final double? crossing = _crossValue(axis);
       final CartesianAxesParentData childParentData =
           axis.parentData! as CartesianAxesParentData;
+      final double extent = axis.labelsExtent ?? spaceBetweenMultipleAxes;
       if (axis.opposedPosition) {
         axis.invertElementsOrder = false;
         if (crossing != null) {
@@ -2227,6 +2345,12 @@ class RenderCartesianAxes extends RenderBox
         } else {
           childParentData.offset = rightAxisPosition;
           rightAxisPosition = rightAxisPosition.translate(axis.size.width, 0);
+          // Move the axis with padding value for multiple axes.
+          if (axis.isVisible &&
+              (rightAxisPosition != plotAreaBounds.topRight ||
+                  axis.labelsExtent != null)) {
+            rightAxisPosition = rightAxisPosition.translate(extent, 0);
+          }
         }
       } else {
         axis.invertElementsOrder = true;
@@ -2242,6 +2366,12 @@ class RenderCartesianAxes extends RenderBox
           childParentData.offset =
               leftAxisPosition.translate(-axis.size.width, 0);
           leftAxisPosition = childParentData.offset;
+          // Move the axis with padding value for multiple axes.
+          if (axis.isVisible &&
+              (leftAxisPosition != plotAreaBounds.topLeft ||
+                  axis.labelsExtent != null)) {
+            leftAxisPosition = leftAxisPosition.translate(-extent, 0);
+          }
         }
       }
     }
@@ -2255,6 +2385,7 @@ class RenderCartesianAxes extends RenderBox
       final double? crossing = _crossValue(axis);
       final CartesianAxesParentData childParentData =
           axis.parentData! as CartesianAxesParentData;
+      final double extent = axis.labelsExtent ?? spaceBetweenMultipleAxes;
       if (axis.opposedPosition) {
         axis.invertElementsOrder = true;
         if (crossing != null) {
@@ -2269,6 +2400,12 @@ class RenderCartesianAxes extends RenderBox
           childParentData.offset =
               topAxisPosition.translate(0, -axis.size.height);
           topAxisPosition = childParentData.offset;
+          // Move the axis with padding value for multiple axes.
+          if (axis.isVisible &&
+              (topAxisPosition != plotAreaBounds.topLeft ||
+                  axis.labelsExtent != null)) {
+            topAxisPosition = topAxisPosition.translate(0, -extent);
+          }
         }
       } else {
         axis.invertElementsOrder = false;
@@ -2284,6 +2421,12 @@ class RenderCartesianAxes extends RenderBox
           childParentData.offset = bottomAxisPosition;
           bottomAxisPosition =
               bottomAxisPosition.translate(0, axis.size.height);
+          // Move the axis with padding value for multiple axes.
+          if (axis.isVisible &&
+              (bottomAxisPosition != plotAreaBounds.bottomLeft ||
+                  axis.labelsExtent != null)) {
+            bottomAxisPosition = bottomAxisPosition.translate(0, extent);
+          }
         }
       }
     }
@@ -2714,7 +2857,7 @@ class RenderIndicatorArea extends RenderBox
     int index = 0;
     final List<LegendItem> legendItems = <LegendItem>[];
     visitChildren((RenderObject child) {
-      final LegendItemProvider provider = child as LegendItemProvider;
+      final LegendItemProviderMixin provider = child as LegendItemProviderMixin;
       final List<LegendItem>? items = provider.buildLegendItems(index);
       if (items != null) {
         legendItems.addAll(items);
@@ -3226,10 +3369,16 @@ class RenderLoadingIndicator extends RenderProxyBox
   }
 
   void handleScaleStart(ScaleStartDetails details) {
+    if (!attached) {
+      return;
+    }
     _startPosition = globalToLocal(details.focalPoint);
   }
 
   void handleScaleUpdate(ScaleUpdateDetails details) {
+    if (!attached) {
+      return;
+    }
     _endPosition = globalToLocal(details.focalPoint);
   }
 
@@ -3238,10 +3387,16 @@ class RenderLoadingIndicator extends RenderProxyBox
   }
 
   void handleDragStart(DragStartDetails details) {
+    if (!attached) {
+      return;
+    }
     _startPosition = globalToLocal(details.globalPosition);
   }
 
   void handleDragUpdate(DragUpdateDetails details) {
+    if (!attached) {
+      return;
+    }
     _endPosition = globalToLocal(details.globalPosition);
   }
 

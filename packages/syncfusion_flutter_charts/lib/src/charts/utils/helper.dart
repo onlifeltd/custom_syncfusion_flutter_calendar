@@ -339,7 +339,9 @@ Color dataLabelSurfaceColor(
 /// To get saturation color.
 Color saturatedTextColor(Color color) {
   final num contrast =
-      ((color.red * 299 + color.green * 587 + color.blue * 114) / 1000).round();
+      (((color.r * 255) * 299 + (color.g * 255) * 587 + (color.b * 255) * 114) /
+              1000)
+          .round();
   return contrast >= 128 ? Colors.black : Colors.white;
 }
 
@@ -472,7 +474,7 @@ ShapeMarkerType toShapeMarkerType(DataMarkerType type) {
 }
 
 ShapeMarkerType toLegendShapeMarkerType(
-    LegendIconType iconType, core.LegendItemProvider provider) {
+    LegendIconType iconType, core.LegendItemProviderMixin provider) {
   switch (iconType) {
     case LegendIconType.seriesType:
       return provider.effectiveLegendIconType();
@@ -2012,7 +2014,8 @@ Widget buildLegendItem(
   }
 
   if (item.series is! CartesianSeriesRenderer &&
-      item.series!.segments.isNotEmpty) {
+      item.series!.segments.isNotEmpty &&
+      item.pointIndex < item.series!.segments.length) {
     point.isVisible = item.series!.segmentAt(item.pointIndex).isVisible;
   }
 

@@ -334,9 +334,10 @@ class RadialBarSeriesRenderer<T, D> extends CircularSeriesRenderer<T, D> {
       if (trackColor != Colors.transparent) {
         if (useSeriesColor) {
           segment.trackFillPaint.color =
-              segment.fillPaint.color.withOpacity(trackOpacity);
+              segment.fillPaint.color.withValues(alpha: trackOpacity);
         } else {
-          segment.trackFillPaint.color = trackColor.withOpacity(trackOpacity);
+          segment.trackFillPaint.color =
+              trackColor.withValues(alpha: trackOpacity);
         }
       } else {
         if (useSeriesColor) {
@@ -356,6 +357,9 @@ class RadialBarSeriesRenderer<T, D> extends CircularSeriesRenderer<T, D> {
 
   @override
   List<LegendItem>? buildLegendItems(int index) {
+    if (circularYValues.isEmpty) {
+      return null;
+    }
     final num sumOfY = circularYValues
         .reduce((num value, num element) => value + element.abs());
     const double pointStartAngle = -90;

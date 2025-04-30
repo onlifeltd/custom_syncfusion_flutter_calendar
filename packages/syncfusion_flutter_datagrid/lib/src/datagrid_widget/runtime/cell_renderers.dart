@@ -171,6 +171,7 @@ class GridHeaderCellRenderer
                 onChanged: (bool? newValue) {
                   if (dataGridConfiguration.selectionMode ==
                       SelectionMode.multiple) {
+                    _requestFocus(dataGridConfiguration);
                     selection_manager.handleSelectionFromCheckbox(
                         dataGridConfiguration,
                         dataCell,
@@ -271,9 +272,17 @@ class GridCheckboxRenderer
             shape: dataGridConfiguration.checkboxShape,
             value: selectionState,
             onChanged: (bool? newValue) {
+              _requestFocus(dataGridConfiguration);
               selection_manager.handleSelectionFromCheckbox(
                   dataGridConfiguration, dataCell, selectionState, newValue);
             }));
+  }
+}
+
+void _requestFocus(DataGridConfiguration dataGridConfiguration) {
+  if (dataGridConfiguration.dataGridFocusNode != null &&
+      !dataGridConfiguration.dataGridFocusNode!.hasPrimaryFocus) {
+    dataGridConfiguration.dataGridFocusNode!.requestFocus();
   }
 }
 
@@ -422,7 +431,14 @@ class GridIndentCellRenderer
           newIcon = (iconIndex == dataCell.columnIndex)
               ? Center(
                   child: GroupExpanderIcon(
-                    key: ObjectKey(rowIndex),
+                    // Issue:
+                    // When sorting or navigating through pages with grouping, the group icon's state (expanded/collapsed) was incorrect.
+                    //
+                    // Fix:
+                    // The issue occurred because the widget’s state persisted due to unchanged rowIndex during actions like sorting.
+                    // To resolve this, the key is updated to combine both the rowIndex and isExpanded state,
+                    // ensuring uniqueness and preventing old state from being reused.
+                    key: ObjectKey('${rowIndex}_${groupItem.isExpanded}'),
                     isExpanded: groupItem.isExpanded,
                     dataGridConfiguration: dataGridConfiguration,
                     rowIndex: dataCell.rowIndex,

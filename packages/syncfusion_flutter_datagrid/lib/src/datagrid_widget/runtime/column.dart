@@ -16,6 +16,7 @@ import '../helper/datagrid_helper.dart' as grid_helper;
 import '../helper/datagrid_helper.dart';
 import '../helper/enums.dart';
 import '../helper/selection_helper.dart';
+import '../selection/selection_manager.dart' as selection_manager;
 import '../sfdatagrid.dart';
 import 'generator.dart';
 
@@ -634,12 +635,7 @@ class ColumnSizer {
     switch (dataGridConfiguration.columnWidthCalculationRange) {
       case ColumnWidthCalculationRange.allRows:
         startRowIndex = 0;
-        if (dataGridConfiguration.source.groupedColumns.isEmpty) {
-          endRowIndex = dataGridConfiguration.source.rows.length - 1;
-        } else {
-          endRowIndex =
-              dataGridConfiguration.group!.displayElements!.length - 1;
-        }
+        endRowIndex = dataGridConfiguration.source.rows.length - 1;
         break;
       case ColumnWidthCalculationRange.visibleRows:
         final VisibleLinesCollection visibleLines =
@@ -673,14 +669,15 @@ class ColumnSizer {
   double _getCellWidth(GridColumn column, int rowIndex) {
     final DataGridConfiguration dataGridConfiguration =
         _dataGridStateDetails!();
-    if (grid_helper.isFooterWidgetRow(rowIndex, dataGridConfiguration) ||
-        grid_helper.isTableSummaryIndex(dataGridConfiguration, rowIndex) ||
-        grid_helper.isCaptionSummaryRow(
-            dataGridConfiguration, rowIndex, false)) {
+    if (dataGridConfiguration.columnWidthCalculationRange ==
+            ColumnWidthCalculationRange.visibleRows &&
+        (grid_helper.isFooterWidgetRow(rowIndex, dataGridConfiguration) ||
+            grid_helper.isCaptionSummaryRow(
+                dataGridConfiguration, rowIndex, false))) {
       return 0.0;
     }
 
-    rowIndex = _resolveRowIndex(dataGridConfiguration, rowIndex, false);
+    rowIndex = _resolveRowIndex(dataGridConfiguration, rowIndex);
 
     if (rowIndex == -1) {
       return 0.0;
@@ -899,28 +896,25 @@ class ColumnSizer {
     return columnWidth;
   }
 
-  int _resolveRowIndex(DataGridConfiguration dataGridConfiguration,
-      int rowIndex, bool canResolveIndex) {
-    if (dataGridConfiguration.source.groupedColumns.isNotEmpty) {
-      if (canResolveIndex) {
-        rowIndex =
-            grid_helper.resolveToRecordIndex(dataGridConfiguration, rowIndex);
-      }
+  int _resolveRowIndex(
+      DataGridConfiguration dataGridConfiguration, int rowIndex) {
+    if (dataGridConfiguration.source.groupedColumns.isEmpty ||
+        dataGridConfiguration.columnWidthCalculationRange ==
+            ColumnWidthCalculationRange.allRows) {
+      return rowIndex;
+    }
 
-      final dynamic row =
-          dataGridConfiguration.group?.displayElements?.grouped[rowIndex];
-      if (row != null && row is DataGridRow) {
-        final int recordIndex =
-            effectiveRows(dataGridConfiguration.source).indexOf(row);
-        if (canResolveIndex) {
-          return grid_helper.resolveToRowIndex(
-              dataGridConfiguration, recordIndex);
-        }
-        return recordIndex;
-      }
+    final dynamic row =
+        dataGridConfiguration.group?.displayElements?.grouped[rowIndex];
+
+    if (row == null || row is! DataGridRow) {
       return -1;
     }
-    return rowIndex;
+
+    final int recordIndex =
+        effectiveRows(dataGridConfiguration.source).indexOf(row);
+
+    return recordIndex;
   }
 
   /// Calculates the width of the header cell based on the [GridColumn.columnName].
@@ -1095,15 +1089,27 @@ class ColumnSizer {
       return computeHeaderCellHeight(
           column, _getDefaultTextStyle(dataGridConfiguration, true));
     } else {
-      rowIndex = _resolveRowIndex(dataGridConfiguration, rowIndex, true);
-      if (rowIndex == -1) {
-        return 0.0;
-      }
+      if (dataGridConfiguration.source.groupedColumns.isNotEmpty) {
+        rowIndex =
+            grid_helper.resolveToRecordIndex(dataGridConfiguration, rowIndex);
 
-      final DataGridRow row =
-          grid_helper.getDataGridRow(dataGridConfiguration, rowIndex);
-      return computeCellHeight(column, row, _getCellValue(row, column),
-          _getDefaultTextStyle(dataGridConfiguration, false));
+        if (rowIndex < 0) {
+          return dataGridConfiguration.rowHeight;
+        }
+
+        final dynamic row =
+            grid_helper.getGroupElement(dataGridConfiguration, rowIndex);
+        if (row is! DataGridRow) {
+          return dataGridConfiguration.rowHeight;
+        }
+        return computeCellHeight(column, row, _getCellValue(row, column),
+            _getDefaultTextStyle(dataGridConfiguration, false));
+      } else {
+        final DataGridRow row =
+            grid_helper.getDataGridRow(dataGridConfiguration, rowIndex);
+        return computeCellHeight(column, row, _getCellValue(row, column),
+            _getDefaultTextStyle(dataGridConfiguration, false));
+      }
     }
   }
 
@@ -2297,14 +2303,14 @@ class DataGridFilterHelper {
       refreshEffectiveRows(source, filteredRows);
       updateDataPager(source);
       if (dataGridConfiguration.source.groupedColumns.isNotEmpty) {
-        dataGridConfiguration.group!
-            .clearDisplayElements(dataGridConfiguration);
-        updateDataSource(source);
+        updateDataSource(source, true);
       }
+      selection_manager.refreshSelectedRows(dataGridConfiguration);
       notifyDataGridPropertyChangeListeners(source, propertyName: 'Filtering');
       _invokeFilterChangedCallback(column, filterConditions);
     } else {
-      updateDataSource(source);
+      updateDataSource(source, true);
+      selection_manager.refreshSelectedRows(dataGridConfiguration);
       notifyDataGridPropertyChangeListeners(source, propertyName: 'Filtering');
       _invokeFilterChangedCallback(column, <FilterCondition>[]);
     }
@@ -2475,6 +2481,7 @@ class DataGridFilterHelper {
       dataGridConfiguration.group!.clearDisplayElements(dataGridConfiguration);
     }
     updateDataSource(dataGridConfiguration.source);
+    selection_manager.refreshSelectedRows(dataGridConfiguration);
     notifyDataGridPropertyChangeListeners(dataGridConfiguration.source,
         propertyName: 'Filtering');
     _invokeFilterChangedCallback(column, <FilterCondition>[]);

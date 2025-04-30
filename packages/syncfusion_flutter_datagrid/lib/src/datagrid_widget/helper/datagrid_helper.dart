@@ -107,14 +107,30 @@ int resolveStartRecordIndex(
 /// Help to resolve the group from the display elements.
 dynamic getGroupElement(
     DataGridConfiguration dataGridConfiguration, int rowIndex) {
-  if (rowIndex < 0) {
-    return -1;
-  }
-  if (rowIndex >= 0) {
+  if (rowIndex >= 0 &&
+      rowIndex < dataGridConfiguration.group!.displayElements!.grouped.length) {
     return dataGridConfiguration.group!.displayElements!.grouped[rowIndex];
-  } else {
-    return -1;
   }
+  return null;
+}
+
+/// Help to get the row by the row index.
+DataGridRow? getDataRow(
+    DataGridConfiguration dataGridConfiguration, int rowIndex) {
+  if (dataGridConfiguration.source.groupedColumns.isNotEmpty) {
+    final dynamic element = getGroupElement(dataGridConfiguration, rowIndex);
+    return element is DataGridRow ? element : null;
+  }
+
+  final List<DataGridRow> rows = effectiveRows(dataGridConfiguration.source);
+  return (rowIndex >= 0 && rowIndex < rows.length) ? rows[rowIndex] : null;
+}
+
+/// Help to resolves the effective row count.
+int resolveEffectiveRowCount(DataGridConfiguration dataGridConfiguration) {
+  return dataGridConfiguration.source.groupedColumns.isNotEmpty
+      ? dataGridConfiguration.group!.displayElements!.grouped.length
+      : effectiveRows(dataGridConfiguration.source).length;
 }
 
 /// Help to resolve the next grouped row from the display elements.
@@ -231,7 +247,9 @@ int getStartFooterFrozenColumnIndex(
 /// Get the last frozen row index in top of data grid, it
 /// will consider the stacked header, header and top frozen pane
 int getLastFrozenRowIndex(DataGridConfiguration dataGridConfiguration) {
-  if (dataGridConfiguration.frozenRowsCount <= 0) {
+  final int frozenRowCount = dataGridConfiguration.frozenRowsCount;
+  if (frozenRowCount <= 0 ||
+      frozenRowCount > resolveEffectiveRowCount(dataGridConfiguration)) {
     return -1;
   }
 
@@ -242,8 +260,16 @@ int getLastFrozenRowIndex(DataGridConfiguration dataGridConfiguration) {
 /// Get the starting frozen row index in bottom of data grid, it
 /// will consider the bottom table summary and bottom frozen pane
 int getStartFooterFrozenRowIndex(DataGridConfiguration dataGridConfiguration) {
+  final int effectiveRowCount = resolveEffectiveRowCount(dataGridConfiguration);
+  // Check footer frozen rows count exceeds the effective row count.
+  final bool isFrozenRowCountExceeded =
+      (effectiveRowCount - dataGridConfiguration.frozenRowsCount).isNegative ||
+          dataGridConfiguration.footerFrozenRowsCount > effectiveRowCount;
+
   final int rowCount = dataGridConfiguration.container.rowCount;
-  if (rowCount <= 0 || dataGridConfiguration.footerFrozenRowsCount <= 0) {
+  if (rowCount <= 0 ||
+      dataGridConfiguration.footerFrozenRowsCount <= 0 ||
+      isFrozenRowCountExceeded) {
     return -1;
   }
 

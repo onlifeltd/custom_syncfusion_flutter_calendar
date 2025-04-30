@@ -15,7 +15,7 @@ import 'data_label.dart';
 import 'element_widget.dart';
 
 // ignore: must_be_immutable
-class FunnelChartDataLabelPositioned
+base class FunnelChartDataLabelPositioned
     extends ParentDataWidget<ChartElementParentData>
     with LinkedListEntry<FunnelChartDataLabelPositioned> {
   FunnelChartDataLabelPositioned({
@@ -147,12 +147,12 @@ class _FunnelDataLabelContainerState<T, D>
   Color _dataPointColor(int dataPointIndex) {
     final DataLabelSettings settings = widget.settings;
     if (settings.color != null) {
-      return settings.color!.withOpacity(settings.opacity);
+      return settings.color!.withValues(alpha: settings.opacity);
     } else if (settings.useSeriesColor) {
       final int segmentsLastIndex = renderer!.segments.length - 1;
       return renderer!
           .segments[segmentsLastIndex - dataPointIndex].fillPaint.color
-          .withOpacity(settings.opacity);
+          .withValues(alpha: settings.opacity);
     }
     return Colors.transparent;
   }

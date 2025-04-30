@@ -755,7 +755,7 @@ class _TimeSlotRenderObject extends CustomCalendarRenderObject {
       rect = Rect.fromLTRB(
           leftPosition, topPosition, rightPosition, bottomPosition);
       _linePainter.style = PaintingStyle.fill;
-      _linePainter.color = Colors.grey.withOpacity(0.2);
+      _linePainter.color = Colors.grey.withValues(alpha: 0.2);
       canvas.drawRect(rect, _linePainter);
     }
   }
@@ -799,7 +799,8 @@ class _TimeSlotRenderObject extends CustomCalendarRenderObject {
         timeIntervalHeight;
     _linePainter.style = PaintingStyle.stroke;
     _linePainter.strokeWidth = strokeWidth;
-    _linePainter.color = calendarTheme.selectionBorderColor!.withOpacity(0.4);
+    _linePainter.color =
+        calendarTheme.selectionBorderColor!.withValues(alpha: 0.4);
     left += isRTL ? 0 : timeLabelWidth;
     double height = timeIntervalHeight;
     if (top == 0) {
@@ -837,7 +838,7 @@ class _TimeSlotRenderObject extends CustomCalendarRenderObject {
     for (int i = 0; i < count; i++) {
       final TimeRegionView view = specialRegionBounds[i];
       final CalendarTimeRegion region = view.region;
-      _linePainter.color = region.color ?? Colors.grey.withOpacity(0.2);
+      _linePainter.color = region.color ?? Colors.grey.withValues(alpha: 0.2);
 
       final TextStyle textStyle = themeData.textTheme.bodyMedium!
           .copyWith(fontSize: 14)

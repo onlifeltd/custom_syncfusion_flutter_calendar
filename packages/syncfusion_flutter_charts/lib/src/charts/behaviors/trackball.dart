@@ -10,7 +10,6 @@ import 'package:syncfusion_flutter_core/theme.dart';
 
 import '../axis/axis.dart';
 import '../axis/category_axis.dart';
-import '../axis/datetime_category_axis.dart';
 import '../axis/logarithmic_axis.dart';
 import '../base.dart';
 import '../common/callbacks.dart';
@@ -473,7 +472,7 @@ class TrackballBehavior extends ChartBehavior {
       }
     }
 
-    _show();
+    _show(parent);
   }
 
   /// Displays the trackball at the specified point index.
@@ -510,7 +509,13 @@ class TrackballBehavior extends ChartBehavior {
   /// (e.g., CrosshairBehavior, TrackballBehavior, ZoomingBehavior).
   @override
   void handleEvent(PointerEvent event, BoxHitTestEntry entry) {
-    if (event is PointerMoveEvent) {
+    if (parentBox == null) {
+      return;
+    }
+
+    if (event is PointerDownEvent) {
+      _handlePointerDown(event);
+    } else if (event is PointerMoveEvent) {
       _handlePointerMove(event);
     } else if (event is PointerHoverEvent) {
       _handlePointerHover(event);
@@ -518,6 +523,12 @@ class TrackballBehavior extends ChartBehavior {
       _hideTrackball(immediately: true);
     } else if (event is PointerUpEvent) {
       _hideTrackball();
+    }
+  }
+
+  void _handlePointerDown(PointerDownEvent details) {
+    if (activationMode == ActivationMode.singleTap) {
+      _showTrackball(parentBox!.globalToLocal(details.position));
     }
   }
 
@@ -536,7 +547,7 @@ class TrackballBehavior extends ChartBehavior {
   /// Called when a pointer or mouse enter on the screen.
   @override
   void handlePointerEnter(PointerEnterEvent details) {
-    if (activationMode == ActivationMode.singleTap) {
+    if (parentBox != null && activationMode == ActivationMode.singleTap) {
       _showTrackball(parentBox!.globalToLocal(details.position));
     }
   }
@@ -551,7 +562,7 @@ class TrackballBehavior extends ChartBehavior {
   /// recognized in behavior.
   @override
   void handleLongPressStart(LongPressStartDetails details) {
-    if (activationMode == ActivationMode.longPress) {
+    if (parentBox != null && activationMode == ActivationMode.longPress) {
       _showTrackball(parentBox!.globalToLocal(details.globalPosition));
     }
   }
@@ -560,7 +571,7 @@ class TrackballBehavior extends ChartBehavior {
   /// recognized in behavior.
   @override
   void handleLongPressMoveUpdate(LongPressMoveUpdateDetails details) {
-    if (activationMode == ActivationMode.longPress) {
+    if (parentBox != null && activationMode == ActivationMode.longPress) {
       _showTrackball(parentBox!.globalToLocal(details.globalPosition));
     }
   }
@@ -575,7 +586,7 @@ class TrackballBehavior extends ChartBehavior {
   /// Called when the pointer tap has contacted the screen in behavior.
   @override
   void handleTapDown(TapDownDetails details) {
-    if (activationMode == ActivationMode.singleTap) {
+    if (parentBox != null && activationMode == ActivationMode.singleTap) {
       _showTrackball(parentBox!.globalToLocal(details.globalPosition));
     }
   }
@@ -589,7 +600,7 @@ class TrackballBehavior extends ChartBehavior {
   /// Called when pointer tap has contacted the screen double time in behavior.
   @override
   void handleDoubleTap(Offset position) {
-    if (activationMode == ActivationMode.doubleTap) {
+    if (parentBox != null && activationMode == ActivationMode.doubleTap) {
       _showTrackball(parentBox!.globalToLocal(position));
       _hideTrackball(doubleTapHideDelay: 200);
     }
@@ -629,9 +640,8 @@ class TrackballBehavior extends ChartBehavior {
     }
   }
 
-  void _show() {
-    final RenderBehaviorArea? parent = parentBox as RenderBehaviorArea?;
-    if (_position == null || parent == null) {
+  void _show(RenderBehaviorArea parent) {
+    if (_position == null) {
       return;
     }
 
@@ -647,10 +657,16 @@ class TrackballBehavior extends ChartBehavior {
       if (tooltipDisplayMode == TrackballDisplayMode.groupAllPoints) {
         for (int i = 0; i < length; i++) {
           final ChartPointInfo pointInfo = chartPointInfo[i];
-          chartPoints.add(pointInfo.chartPoint!);
-          currentPointIndices.add(pointInfo.dataPointIndex!);
-          visibleSeriesIndices.add(pointInfo.seriesIndex!);
-          visibleSeriesList.add(pointInfo.series);
+          final bool isIndicator = pointInfo.series is IndicatorRenderer;
+          final bool isCartesianSeries =
+              pointInfo.series is CartesianSeriesRenderer;
+          if (isIndicator ||
+              (isCartesianSeries && pointInfo.series.enableTrackball)) {
+            chartPoints.add(pointInfo.chartPoint!);
+            currentPointIndices.add(pointInfo.dataPointIndex!);
+            visibleSeriesIndices.add(pointInfo.seriesIndex!);
+            visibleSeriesList.add(pointInfo.series);
+          }
         }
 
         final TrackballGroupingModeInfo groupingModeInfo =
@@ -660,8 +676,14 @@ class TrackballBehavior extends ChartBehavior {
       } else {
         for (int i = 0; i < length; i++) {
           final ChartPointInfo pointInfo = chartPointInfo[i];
-          details.add(TrackballDetails(pointInfo.chartPoint, pointInfo.series,
-              pointInfo.dataPointIndex, pointInfo.seriesIndex));
+          final bool isIndicator = pointInfo.series is IndicatorRenderer;
+          final bool isCartesianSeries =
+              pointInfo.series is CartesianSeriesRenderer;
+          if (isIndicator ||
+              (isCartesianSeries && pointInfo.series.enableTrackball)) {
+            details.add(TrackballDetails(pointInfo.chartPoint, pointInfo.series,
+                pointInfo.dataPointIndex, pointInfo.seriesIndex));
+          }
         }
       }
       parent.trackballBuilder!(details);
@@ -706,6 +728,7 @@ class TrackballBehavior extends ChartBehavior {
     chartPlotArea.visitChildren((RenderObject child) {
       if (child is CartesianSeriesRenderer &&
           child.controller.isVisible &&
+          child.enableTrackball &&
           child.dataSource != null &&
           child.dataSource!.isNotEmpty &&
           child.animationController != null &&
@@ -864,8 +887,8 @@ class TrackballBehavior extends ChartBehavior {
     num yValue = yAxis.pixelToPoint(bounds, position.dx, position.dy);
 
     if (series.canFindLinearVisibleIndexes &&
-        ((xAxis is RenderCategoryAxis && xAxis.arrangeByIndex) ||
-            xAxis is RenderDateTimeCategoryAxis)) {
+        xAxis is RenderCategoryAxis &&
+        xAxis.arrangeByIndex) {
       final DoubleRange range = xAxis.visibleRange!;
       final int index = xValue.round();
       if (index <= range.maximum &&
@@ -1771,7 +1794,7 @@ class TrackballBehavior extends ChartBehavior {
     if (_isTransposed) {
       switch (tooltipAlignment) {
         case ChartAlignment.near:
-          xPos = _plotAreaBounds.top;
+          xPos = _plotAreaBounds.left;
           break;
 
         case ChartAlignment.center:
@@ -1779,7 +1802,7 @@ class TrackballBehavior extends ChartBehavior {
           break;
 
         case ChartAlignment.far:
-          xPos = _plotAreaBounds.bottom;
+          xPos = _plotAreaBounds.right;
           break;
       }
     } else {
@@ -2678,8 +2701,9 @@ class TrackballBuilderRenderBox extends RenderShiftedBox {
     final List<num> tooltipBottom = <num>[];
     final List<RenderChartAxis> xAxesInfo = <RenderChartAxis>[];
     final List<RenderChartAxis> yAxesInfo = <RenderChartAxis>[];
-    final bool isTrackballMarkerEnabled =
-        trackballBehavior.markerSettings != null;
+    final TrackballMarkerSettings? markerSettings =
+        trackballBehavior.markerSettings;
+    final bool isTrackballMarkerEnabled = markerSettings != null;
 
     final List<Offset> visiblePoints = trackballBehavior._visiblePoints;
     pointerLength = trackballBehavior.tooltipSettings.arrowLength;
@@ -2694,31 +2718,36 @@ class TrackballBuilderRenderBox extends RenderShiftedBox {
       child!.layout(constraints, parentUsesSize: true);
       if (child!.parentData is BoxParentData) {
         childParentData = child!.parentData! as BoxParentData;
-        final double sizeFullWidth = child!.size.width;
-        final double sizeFullHeight = child!.size.height;
-        final double sizeHalfWidth = sizeFullWidth / 2;
-        final double sizeHalfHeight = sizeFullHeight / 2;
+        final double markerHalfWidth =
+            isTrackballMarkerEnabled ? markerSettings.width / 2 : 0;
+        final double markerHalfHeight =
+            isTrackballMarkerEnabled ? markerSettings.height / 2 : 0;
+        final double templateFullWidth = child!.size.width;
+        final double templateFullHeight = child!.size.height;
+        final double templateHalfWidth = templateFullWidth / 2;
+        final double templateHalfHeight = templateFullHeight / 2;
 
         if (isGroupAllPoints) {
           final ChartAlignment tooltipAlignment =
               trackballBehavior.tooltipAlignment;
-          if (tooltipAlignment == ChartAlignment.center) {
-            yPos = plotAreaBounds.center.dy - sizeHalfHeight;
-          } else if (tooltipAlignment == ChartAlignment.near) {
-            yPos = plotAreaBounds.top;
+          final Offset tooltipPosition =
+              trackballBehavior._defaultGroupPosition(xPos, yPos);
+          xPos = tooltipPosition.dx;
+          yPos = tooltipPosition.dy;
+          if (isTransposed) {
+            if (tooltipAlignment == ChartAlignment.far) {
+              xPos = tooltipPosition.dx - templateFullWidth;
+            } else if (tooltipAlignment == ChartAlignment.center) {
+              xPos = tooltipPosition.dx - templateHalfWidth;
+            }
           } else {
-            yPos = plotAreaBounds.bottom;
-          }
-
-          if (yPos + sizeFullHeight > plotAreaBounds.bottom &&
-              tooltipAlignment == ChartAlignment.far) {
-            yPos = plotAreaBounds.bottom - sizeFullHeight;
+            if (tooltipAlignment == ChartAlignment.far) {
+              yPos = tooltipPosition.dy - templateFullHeight;
+            } else if (tooltipAlignment == ChartAlignment.center) {
+              yPos = tooltipPosition.dy - templateHalfHeight;
+            }
           }
         }
-
-        final double markerHalfWidth = isTrackballMarkerEnabled
-            ? trackballBehavior.markerSettings!.width / 2
-            : 0;
 
         if (chartPointInfo != null &&
             chartPointInfo!.isNotEmpty &&
@@ -2730,11 +2759,11 @@ class TrackballBuilderRenderBox extends RenderShiftedBox {
             final double closestPointX = visiblePoint.dx;
             final double closestPointY = visiblePoint.dy;
             tooltipTop.add(isTransposed
-                ? closestPointX - sizeHalfWidth
-                : closestPointY - sizeHalfHeight);
+                ? closestPointX - templateHalfWidth
+                : closestPointY - templateHalfHeight);
             tooltipBottom.add(isTransposed
-                ? closestPointX + sizeHalfWidth
-                : closestPointY + sizeHalfHeight);
+                ? closestPointX + templateHalfWidth
+                : closestPointY + templateHalfHeight);
             xAxesInfo.add(series.xAxis!);
             yAxesInfo.add(series.yAxis!);
           }
@@ -2751,11 +2780,11 @@ class TrackballBuilderRenderBox extends RenderShiftedBox {
 
           if (isNearestPoint) {
             left = isTransposed
-                ? xPos + sizeHalfWidth
+                ? xPos + templateHalfWidth
                 : xPos + padding + markerHalfWidth;
             top = isTransposed
                 ? yPos + padding + markerHalfWidth
-                : yPos - sizeHalfHeight;
+                : yPos - templateHalfHeight;
           } else {
             left = (isTransposed
                     ? _tooltipPosition!.tooltipTop[index!]
@@ -2768,23 +2797,23 @@ class TrackballBuilderRenderBox extends RenderShiftedBox {
           }
 
           if (!isTransposed) {
-            if (left + sizeFullWidth > totalWidth) {
+            if (left + templateFullWidth > totalWidth) {
               isRight = true;
-              left = xPos - sizeFullWidth - pointerLength - markerHalfWidth;
+              left = xPos - templateFullWidth - pointerLength - markerHalfWidth;
             } else {
               isRight = false;
             }
           } else {
-            if (top + sizeFullHeight > plotAreaBounds.bottom) {
+            if (top + templateFullHeight > plotAreaBounds.bottom) {
               isBottom = true;
-              top = yPos - sizeFullHeight - pointerLength - markerHalfWidth;
+              top = yPos - templateFullHeight - pointerLength - markerHalfWidth;
             } else {
               isBottom = false;
             }
           }
 
           trackballTemplateRect =
-              Rect.fromLTWH(left, top, sizeFullWidth, sizeFullHeight);
+              Rect.fromLTWH(left, top, templateFullWidth, templateFullHeight);
           double xPlotOffset =
               visiblePoints.first.dx - trackballTemplateRect!.width / 2;
           final double rightTemplateEnd =
@@ -2853,12 +2882,32 @@ class TrackballBuilderRenderBox extends RenderShiftedBox {
           }
         } else {
           if (visiblePoints.isNotEmpty) {
-            if (xPos + sizeFullWidth > totalWidth) {
-              xPos = xPos - sizeFullWidth - 2 * padding - markerHalfWidth;
+            // Adjusts the yPos and xPos of the trackball tooltip to ensure
+            // it stays within the plot area bounds.
+            if (isTransposed) {
+              final double templateYPosition =
+                  yPos - templateFullHeight - padding - markerHalfHeight;
+              // Move the template inside the plot area bounds, when
+              // template top lesser than plot area bounds top.
+              if (templateYPosition < plotAreaBounds.top) {
+                yPos = yPos + padding + markerHalfHeight;
+              } else {
+                yPos = templateYPosition;
+              }
+            } else {
+              final double templateXPosition = xPos + padding + markerHalfWidth;
+              // Move the template inside the plot area bounds, when
+              // template right greater than plot area bounds right.
+              if (templateXPosition + templateFullWidth >
+                  plotAreaBounds.right) {
+                xPos = xPos - templateFullWidth - padding - markerHalfWidth;
+              } else {
+                xPos = templateXPosition;
+              }
             }
 
-            trackballTemplateRect =
-                Rect.fromLTWH(xPos, yPos, sizeFullWidth, sizeFullHeight);
+            trackballTemplateRect = Rect.fromLTWH(
+                xPos, yPos, templateFullWidth, templateFullHeight);
             double xPlotOffset =
                 visiblePoints.first.dx - trackballTemplateRect!.width / 2;
             final double rightTemplateEnd =
@@ -2866,19 +2915,9 @@ class TrackballBuilderRenderBox extends RenderShiftedBox {
             final double leftTemplateEnd = xPlotOffset;
 
             if (_isTemplateWithinBounds(
-                    plotAreaBounds, trackballTemplateRect!) &&
-                (boundaryRight > trackballTemplateRect!.right &&
-                    boundaryLeft < trackballTemplateRect!.left)) {
+                plotAreaBounds, trackballTemplateRect!)) {
               isTemplateInBounds = true;
-              childParentData.offset = Offset(
-                  xPos +
-                      (trackballTemplateRect!.right + padding > boundaryRight
-                          ? trackballTemplateRect!.right +
-                              padding -
-                              boundaryRight
-                          : padding) +
-                      markerHalfWidth,
-                  yPos);
+              childParentData.offset = Offset(xPos, yPos);
             } else if (plotAreaBounds.width > trackballTemplateRect!.width &&
                 plotAreaBounds.height > trackballTemplateRect!.height) {
               isTemplateInBounds = true;
@@ -2915,6 +2954,7 @@ class TrackballBuilderRenderBox extends RenderShiftedBox {
                   }
                 }
               }
+
               childParentData.offset = Offset(xPlotOffset, yPos);
             } else {
               child!.layout(constraints.copyWith(maxWidth: 0),

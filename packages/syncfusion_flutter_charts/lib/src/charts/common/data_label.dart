@@ -588,7 +588,7 @@ typedef _ChartDataLabelWidgetBuilder<T, D> = Widget Function(
 );
 
 // ignore: must_be_immutable
-class CartesianChartDataLabelPositioned
+base class CartesianChartDataLabelPositioned
     extends ParentDataWidget<ChartElementParentData>
     with LinkedListEntry<CartesianChartDataLabelPositioned> {
   CartesianChartDataLabelPositioned({
@@ -751,13 +751,13 @@ class _CartesianDataLabelContainerState<T, D>
   Color _dataPointColor(int dataPointIndex) {
     final DataLabelSettings settings = widget.settings;
     if (settings.color != null) {
-      return settings.color!.withOpacity(settings.opacity);
+      return settings.color!.withValues(alpha: settings.opacity);
     } else if (settings.useSeriesColor) {
       final Color? pointColor = renderer!.pointColors.isNotEmpty
           ? renderer!.pointColors[dataPointIndex]
           : null;
       return (pointColor ?? renderer!.color ?? renderer!.paletteColor)
-          .withOpacity(settings.opacity);
+          .withValues(alpha: settings.opacity);
     } else {
       return Colors.transparent;
     }
@@ -1006,7 +1006,7 @@ class RenderCartesianDataLabelStack<T, D> extends RenderChartElementStack {
       while (child != null) {
         final ChartElementParentData childParentData =
             child.parentData! as ChartElementParentData;
-        if ((childParentData.offset & child.size).contains(localPosition)) {
+        if (childParentData.bounds.contains(localPosition)) {
           return childParentData.dataPointIndex;
         }
         child = childParentData.previousSibling;
@@ -1014,13 +1014,7 @@ class RenderCartesianDataLabelStack<T, D> extends RenderChartElementStack {
     } else if (labels != null) {
       for (int i = labels!.length - 1; i > -1; i--) {
         final CartesianChartDataLabelPositioned label = labels!.elementAt(i);
-        final Rect rect = Rect.fromLTWH(
-          label.offset.dx,
-          label.offset.dy,
-          label.size.width + settings.margin.horizontal,
-          label.size.height + settings.margin.vertical,
-        );
-        if (rect.contains(localPosition)) {
+        if (label.bounds.contains(localPosition)) {
           return label.dataPointIndex;
         }
       }
@@ -1264,8 +1258,8 @@ class RenderCartesianDataLabelStack<T, D> extends RenderChartElementStack {
 
   Rect _calculateBounds(Size childSize, Offset offset) {
     return Rect.fromLTWH(
-      offset.dx + settings.offset.dx,
-      offset.dy - settings.offset.dy,
+      offset.dx,
+      offset.dy,
       childSize.width + settings.margin.horizontal,
       childSize.height + settings.margin.vertical,
     );

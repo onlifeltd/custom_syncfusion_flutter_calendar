@@ -742,13 +742,8 @@ class RowGenerator {
               dataGridConfiguration.rowsCacheExtent! > 0) {
             final int cacheLength =
                 visibleRows.length + dataGridConfiguration.rowsCacheExtent!;
-            final int footerRowsCount = dataGridConfiguration
-                    .footerFrozenRowsCount +
-                grid_helper.getTableSummaryCount(
-                    dataGridConfiguration, GridTableSummaryRowPosition.bottom);
 
-            if (items.length < cacheLength &&
-                index >= (items.length - footerRowsCount)) {
+            if (items.length <= cacheLength) {
               dr = _createDataRow(index, visibleColumns);
               dr.isEnsured = true;
               items.add(dr);
@@ -1275,7 +1270,12 @@ class RowGenerator {
       if (dataGridConfiguration.source.groupedColumns.isNotEmpty) {
         final int rowIndex =
             resolveStartRecordIndex(dataGridConfiguration, row.rowIndex);
-        record = getGroupElement(dataGridConfiguration, rowIndex);
+        final dynamic element =
+            getGroupElement(dataGridConfiguration, rowIndex);
+        if (element is! DataGridRow) {
+          return;
+        }
+        record = element;
       } else {
         final int recordIndex = grid_helper.resolveToRecordIndex(
             dataGridConfiguration, row.rowIndex);
