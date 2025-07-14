@@ -62,14 +62,9 @@ class _MyHomePageState extends State<MyHomePage> {
                           details.tapOffsetData != null) {
                         final tapData = details.tapOffsetData!;
                         
-                        print('Appointment tapped at offset: ${tapData.appointmentTapOffset}');
-                        print('Appointment size: ${tapData.appointmentSize}');
-                        print('Appointment global position: ${tapData.appointmentOffset}');
-                        
-                        final box = calendarKey.currentContext?.findRenderObject() as RenderBox;
-                        final offset = box.localToGlobal(Offset.zero);
-                        print('Screen Size: $size');
-                        print('SfCalendar offset from globalKey: $offset');
+                        print('appointmentTapOffset: ${tapData.appointmentTapOffset}');
+                        print('appointmentSize: ${tapData.appointmentSize}');
+                        print('appointmentOffset: ${tapData.appointmentOffset}');
                       }
                     },
                     monthViewSettings: const MonthViewSettings(
@@ -87,10 +82,14 @@ class _MyHomePageState extends State<MyHomePage> {
     final DateTime endTime = startTime.add(const Duration(hours: 2));
     meetings.add(Meeting(
         'Conference', startTime, endTime, const Color(0xFF0F8644), false));
-    // meetings.add(Meeting(
-    //     'All day event', startTime, endTime, const Color(0xFFAF3654), true));
-    // meetings.add(Meeting(
-    //     'All day event 22', startTime, endTime, const Color(0xFFAF3654), true));
+    meetings.add(Meeting(
+        'Conference', DateTime(today.year, today.month, today.day) ,  DateTime(today.year, today.month, today.day).add(const Duration(hours: 1)), const Color(0xFF0F8644), false));
+    meetings.add(Meeting(
+        'All day event', startTime, endTime, const Color(0xFFAF3654), true));
+    meetings.add(Meeting(
+        'All day event 22', startTime, endTime, const Color(0xFFAF3654), true));
+    meetings.add(Meeting(
+        'All day event true', DateTime(today.year, today.month, today.day), DateTime(today.year, today.month, today.day).add(const Duration(hours: 10, minutes: 1)), const Color(0xFFAF3654), true));
     return meetings;
   }
 }

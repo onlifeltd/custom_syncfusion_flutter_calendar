@@ -10100,7 +10100,7 @@ class _CalendarViewState extends State<_CalendarView> with TickerProviderStateMi
     final RRect appointmentRect = appointmentView.appointmentRect!;
 
     // Check if this is an all-day appointment
-    final bool isAllDay = allDayHeight > 0.0 && appointmentRect.top < allDayHeight;
+    final bool isAllDay = appointmentView.appointment?.isAllDay ?? false;
 
     // Account for scroll offset in different views
     double adjustedAppointmentLeft = appointmentRect.left;
