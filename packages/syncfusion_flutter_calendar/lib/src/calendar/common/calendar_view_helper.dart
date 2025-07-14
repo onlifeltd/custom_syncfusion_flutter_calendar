@@ -581,8 +581,15 @@ class CalendarViewHelper {
       DateTime? date,
       List<dynamic>? appointments,
       CalendarElement element,
-      CalendarResource? resource) {
-    calendar.onTap!(CalendarTapDetails(appointments, date, element, resource));
+      CalendarResource? resource,
+      [CalendarTapOffsetData? tapOffsetData]) {
+    calendar.onTap!(CalendarTapDetails(
+      appointments, 
+      date, 
+      element, 
+      resource, 
+      tapOffsetData
+    ));
   }
 
   /// Method that raise the calendar long press callback with given parameters.
@@ -1156,6 +1163,33 @@ class CalendarAppointment {
           : Object.hashAll(recurrenceExceptionDates!),
     );
   }
+}
+
+/// Holds the tap offset and size details for calendar appointments.
+/// 
+/// This class encapsulates the positioning information when a user taps on
+/// an appointment in the calendar view. It contains both the tap offset
+/// coordinates and the size of the appointment that was tapped.
+class CalendarTapOffsetData {
+  /// Creates a [CalendarTapOffsetData] with the specified tap offset and appointment size.
+  /// 
+  /// Both [appointmentTapOffset] and [appointmentSize] are required parameters.
+  CalendarTapOffsetData({
+    required this.appointmentTapOffset, 
+    required this.appointmentSize
+  });
+
+  /// The offset position where the appointment was tapped.
+  /// 
+  /// This represents the x and y coordinates of the tap event relative to
+  /// the appointment's coordinate system.
+  final Offset appointmentTapOffset;
+
+  /// The size of the appointment that was tapped.
+  /// 
+  /// Contains the width and height dimensions of the appointment view
+  /// that received the tap event.
+  final Size appointmentSize;
 }
 
 /// It is used to highlight time slots on day, week, work week

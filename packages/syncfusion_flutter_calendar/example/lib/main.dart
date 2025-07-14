@@ -30,11 +30,18 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
         body: SfCalendar(
-      view: CalendarView.month,
       dataSource: MeetingDataSource(_getDataSource()),
       // by default the month appointment display mode set as Indicator, we can
       // change the display mode as appointment using the appointment display
       // mode property
+      onTap: (CalendarTapDetails details) {
+        if (details.targetElement == CalendarElement.appointment &&
+            details.tapOffsetData != null) {
+          print(
+              'Appointment tapped at offset: ${details.tapOffsetData!.appointmentTapOffset}');
+          print('Appointment size: ${details.tapOffsetData!.appointmentSize}');
+        }
+      },
       monthViewSettings: const MonthViewSettings(
           appointmentDisplayMode: MonthAppointmentDisplayMode.appointment),
     ));

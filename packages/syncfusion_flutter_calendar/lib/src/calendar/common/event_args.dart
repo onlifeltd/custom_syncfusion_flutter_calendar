@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../calendar.dart';
+import 'calendar_view_helper.dart';
 
 /// The dates that visible on the view changes in [SfCalendar].
 ///
@@ -32,9 +33,17 @@ class ViewChangedDetails {
 @immutable
 class CalendarTapDetails extends CalendarTouchDetails {
   /// Creates details for [CalendarTapCallback].
-  const CalendarTapDetails(List<dynamic>? appointments, DateTime? date,
-      CalendarElement element, CalendarResource? resource)
-      : super(appointments, date, element, resource);
+  const CalendarTapDetails(
+    List<dynamic>? appointments, 
+    DateTime? date,
+    CalendarElement element, 
+    CalendarResource? resource,
+    [this.tapOffsetData]
+  ) : super(appointments, date, element, resource);
+
+  /// The tap offset data for appointment taps.
+  /// This will be null for non-appointment taps.
+  final CalendarTapOffsetData? tapOffsetData;
 }
 
 /// The element that long pressed on view in [SfCalendar]
