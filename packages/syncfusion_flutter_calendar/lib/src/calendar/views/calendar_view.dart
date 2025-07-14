@@ -8970,6 +8970,7 @@ class _CalendarViewState extends State<_CalendarView> with TickerProviderStateMi
               ? _getAppointmentTapOffsetData(
                   selectedAppointmentView,
                   Offset(xDetails, yPosition),
+                  allDayHeight: allDayHeight,
                 )
               : null;
           CalendarViewHelper.raiseCalendarTapCallback(widget.calendar, selectedDate,
@@ -10086,64 +10087,70 @@ class _CalendarViewState extends State<_CalendarView> with TickerProviderStateMi
 
     return DateTime(date.year, date.month, date.day, hour, minute);
   }
+
   /// Gets the appointment tap offset data for the given appointment view and tap position.
   CalendarTapOffsetData? _getAppointmentTapOffsetData(
     AppointmentView appointmentView, 
-    Offset globalTapPosition) {
-  if (appointmentView.appointmentRect == null) {
-    return null;
+    Offset globalTapPosition,
+    {required double allDayHeight}) {
+    if (appointmentView.appointmentRect == null) {
+      return null;
+    }
+
+    final RRect appointmentRect = appointmentView.appointmentRect!;
+
+    // Check if this is an all-day appointment
+    final bool isAllDay = allDayHeight > 0.0 && appointmentRect.top < allDayHeight;
+
+    // Account for scroll offset in different views
+    double adjustedAppointmentLeft = appointmentRect.left;
+    double adjustedAppointmentTop = appointmentRect.top;
+
+    if (CalendarViewHelper.isTimelineView(widget.view)) {
+      // For timeline views, adjust for horizontal scroll
+      if (_scrollController != null && _scrollController!.hasClients) {
+        adjustedAppointmentLeft = appointmentRect.left - _scrollController!.offset;
+      }
+      
+      // For resource-enabled timeline views, adjust for vertical scroll
+      if (CalendarViewHelper.isResourceEnabled(widget.calendar.dataSource, widget.view) &&
+          _timelineViewVerticalScrollController != null && 
+          _timelineViewVerticalScrollController!.hasClients) {
+        adjustedAppointmentTop = appointmentRect.top - _timelineViewVerticalScrollController!.offset;
+      }
+    } else if (widget.view != CalendarView.month) {
+      // For day/week views, adjust for vertical scroll only for non-all-day appointments
+      if (!isAllDay && _scrollController != null && _scrollController!.hasClients) {
+        adjustedAppointmentTop = appointmentRect.top - _scrollController!.offset;
+      }
+    }
+    // Note: Month view appointments and all-day appointments don't need scroll adjustment
+
+    // Calculate the tap offset relative to the appointment's adjusted position
+    final Offset appointmentTapOffset = Offset(
+      globalTapPosition.dx - adjustedAppointmentLeft,
+      globalTapPosition.dy - adjustedAppointmentTop + (isAllDay ? allDayHeight : 0.0),
+    );
+
+    // Get the appointment size (this doesn't change with scroll)
+    final Size appointmentSize = Size(
+      appointmentRect.width,
+      appointmentRect.height,
+    );
+
+    // Global offset is the appointment's adjusted position
+    // For non-all-day appointments, add allDayHeight to account for the all-day panel
+    final Offset appointmentGlobalOffset = Offset(
+      adjustedAppointmentLeft,
+      isAllDay ? adjustedAppointmentTop : adjustedAppointmentTop + allDayHeight,
+    );
+
+    return CalendarTapOffsetData(
+      appointmentTapOffset: appointmentTapOffset,
+      appointmentSize: appointmentSize,
+      appointmentOffset: appointmentGlobalOffset,
+    );
   }
-
-  final RRect appointmentRect = appointmentView.appointmentRect!;
-  
-  // Account for scroll offset in different views
-  double adjustedAppointmentLeft = appointmentRect.left;
-  double adjustedAppointmentTop = appointmentRect.top;
-  
-  if (CalendarViewHelper.isTimelineView(widget.view)) {
-    // For timeline views, adjust for horizontal scroll
-    if (_scrollController != null && _scrollController!.hasClients) {
-      adjustedAppointmentLeft = appointmentRect.left - _scrollController!.offset;
-    }
-    
-    // For resource-enabled timeline views, adjust for vertical scroll
-    if (CalendarViewHelper.isResourceEnabled(widget.calendar.dataSource, widget.view) &&
-        _timelineViewVerticalScrollController != null && 
-        _timelineViewVerticalScrollController!.hasClients) {
-      adjustedAppointmentTop = appointmentRect.top - _timelineViewVerticalScrollController!.offset;
-    }
-  } else if (widget.view != CalendarView.month) {
-    // For day/week views, adjust for vertical scroll
-    if (_scrollController != null && _scrollController!.hasClients) {
-      adjustedAppointmentTop = appointmentRect.top - _scrollController!.offset;
-    }
-  }
-  // Note: Month view appointments don't need scroll adjustment
-  
-  // Calculate the tap offset relative to the appointment's adjusted position
-  final Offset appointmentTapOffset = Offset(
-    globalTapPosition.dx - adjustedAppointmentLeft,
-    globalTapPosition.dy - adjustedAppointmentTop,
-  );
-
-  // Get the appointment size (this doesn't change with scroll)
-  final Size appointmentSize = Size(
-    appointmentRect.width,
-    appointmentRect.height,
-  );
-
-  // Global offset is the appointment's adjusted position
-  final Offset appointmentGlobalOffset = Offset(
-    adjustedAppointmentLeft,
-    adjustedAppointmentTop,
-  );
-
-  return CalendarTapOffsetData(
-    appointmentTapOffset: appointmentTapOffset,
-    appointmentSize: appointmentSize,
-    appointmentOffset: appointmentGlobalOffset,
-  );
-}
 
   DateTime? _getDateFromPosition(double x, double y, double timeLabelWidth) {
     double cellWidth = 0;

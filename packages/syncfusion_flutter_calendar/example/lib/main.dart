@@ -87,6 +87,10 @@ class _MyHomePageState extends State<MyHomePage> {
     final DateTime endTime = startTime.add(const Duration(hours: 2));
     meetings.add(Meeting(
         'Conference', startTime, endTime, const Color(0xFF0F8644), false));
+    // meetings.add(Meeting(
+    //     'All day event', startTime, endTime, const Color(0xFFAF3654), true));
+    // meetings.add(Meeting(
+    //     'All day event 22', startTime, endTime, const Color(0xFFAF3654), true));
     return meetings;
   }
 }
