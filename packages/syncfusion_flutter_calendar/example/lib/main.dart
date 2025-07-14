@@ -26,25 +26,58 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final calendarKey = GlobalKey();
+
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+
     return Scaffold(
-        body: SfCalendar(
-      dataSource: MeetingDataSource(_getDataSource()),
-      // by default the month appointment display mode set as Indicator, we can
-      // change the display mode as appointment using the appointment display
-      // mode property
-      onTap: (CalendarTapDetails details) {
-        if (details.targetElement == CalendarElement.appointment &&
-            details.tapOffsetData != null) {
-          print(
-              'Appointment tapped at offset: ${details.tapOffsetData!.appointmentTapOffset}');
-          print('Appointment size: ${details.tapOffsetData!.appointmentSize}');
-        }
-      },
-      monthViewSettings: const MonthViewSettings(
-          appointmentDisplayMode: MonthAppointmentDisplayMode.appointment),
-    ));
+        body: Column(
+          children: [
+            Container(
+              height: 200,
+              color: Colors.blue,
+              alignment: Alignment.center,
+              child: const Text(
+                'Tap on the appointment to see the tap data',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            ),
+            Expanded(
+              child: SfCalendar(
+                    key: calendarKey,
+                    dataSource: MeetingDataSource(_getDataSource()),
+                    // by default the month appointment display mode set as Indicator, we can
+                    // change the display mode as appointment using the appointment display
+                    // mode property
+                                allowAppointmentResize: true,
+            headerHeight: 0,
+            viewHeaderHeight: 0,
+            showCurrentTimeIndicator: true,
+            allowDragAndDrop: true,
+            selectionDecoration: const BoxDecoration(color: Colors.transparent),
+                    onTap: (CalendarTapDetails details) {
+                      if (details.targetElement == CalendarElement.appointment && 
+                          details.tapOffsetData != null) {
+                        final tapData = details.tapOffsetData!;
+                        
+                        print('Appointment tapped at offset: ${tapData.appointmentTapOffset}');
+                        print('Appointment size: ${tapData.appointmentSize}');
+                        print('Appointment global position: ${tapData.appointmentOffset}');
+                        
+                        final box = calendarKey.currentContext?.findRenderObject() as RenderBox;
+                        final offset = box.localToGlobal(Offset.zero);
+                        print('Screen Size: $size');
+                        print('SfCalendar offset from globalKey: $offset');
+                      }
+                    },
+                    monthViewSettings: const MonthViewSettings(
+                appointmentDisplayMode: MonthAppointmentDisplayMode.appointment),
+                  ),
+            ),
+          ],
+        ),);
   }
 
   List<Meeting> _getDataSource() {

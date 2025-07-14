@@ -1169,20 +1169,21 @@ class CalendarAppointment {
 /// 
 /// This class encapsulates the positioning information when a user taps on
 /// an appointment in the calendar view. It contains both the tap offset
-/// coordinates and the size of the appointment that was tapped.
+/// coordinates, the size of the appointment, and the appointment position.
 class CalendarTapOffsetData {
-  /// Creates a [CalendarTapOffsetData] with the specified tap offset and appointment size.
+  /// Creates a [CalendarTapOffsetData] with the specified tap offset and appointment details.
   /// 
   /// Both [appointmentTapOffset] and [appointmentSize] are required parameters.
   CalendarTapOffsetData({
     required this.appointmentTapOffset, 
-    required this.appointmentSize
+    required this.appointmentSize,
+    required this.appointmentOffset,
   });
 
   /// The offset position where the appointment was tapped.
   /// 
   /// This represents the x and y coordinates of the tap event relative to
-  /// the appointment's coordinate system.
+  /// the appointment's top-left corner.
   final Offset appointmentTapOffset;
 
   /// The size of the appointment that was tapped.
@@ -1190,6 +1191,12 @@ class CalendarTapOffsetData {
   /// Contains the width and height dimensions of the appointment view
   /// that received the tap event.
   final Size appointmentSize;
+
+  /// The offset (top/left) of the tapped appointment.
+  /// 
+  /// This represents the absolute position of the appointment's top-left corner
+  /// in the calendar view, accounting for scroll position.
+  final Offset appointmentOffset;
 }
 
 /// It is used to highlight time slots on day, week, work week
