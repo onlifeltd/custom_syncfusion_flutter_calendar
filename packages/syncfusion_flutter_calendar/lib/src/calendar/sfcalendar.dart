@@ -4958,7 +4958,7 @@ class _SfCalendarState extends State<SfCalendar>
     for (final CalendarAppointment appointment in _visibleAppointments) {
       if (appointment.isAllDay ||
           AppointmentHelper.isSpannedToNextDay(
-            appointment.startTime.add(appointment.etaDuration),
+            appointment.actualStartTime.add(appointment.etaDuration),
             appointment.actualEndTime, 
             appointment.isAllDay)) {
         allDayAppointments.add(appointment);
@@ -5448,7 +5448,7 @@ class _SfCalendarState extends State<SfCalendar>
   bool _isAllDayAppointmentView(CalendarAppointment appointment) {
     return appointment.isAllDay ||
        AppointmentHelper.isSpannedToNextDay(
-          appointment.startTime.add(appointment.etaDuration),
+          appointment.actualStartTime.add(appointment.etaDuration),
           appointment.actualEndTime,
           appointment.isAllDay);
   }
