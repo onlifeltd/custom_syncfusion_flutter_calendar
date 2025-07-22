@@ -502,6 +502,17 @@ class AppointmentHelper {
     return getLocation(windowsTimeZoneId);
   }
 
+  /// Check if appointment spans to next day based on original start time (without etaDuration)
+  static bool isSpannedToNextDay(DateTime startTime, DateTime endTime, bool isAllDay) {
+    if (isAllDay) {
+      return true;
+    }
+    
+    // Use the provided startTime (which should already have etaDuration removed) 
+    // to determine if appointment spans multiple days
+    return !isSameDate(startTime, endTime);
+  }
+
   /// Method returns the date time of the provided timezone.
   static DateTime convertTimezone(DateTime dateTime, String? targetTimezone) {
     final DateTime convertedDate = dateTime;

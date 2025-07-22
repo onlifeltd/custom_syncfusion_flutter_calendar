@@ -4957,10 +4957,10 @@ class _SfCalendarState extends State<SfCalendar>
         <CalendarAppointment>[];
     for (final CalendarAppointment appointment in _visibleAppointments) {
       if (appointment.isAllDay ||
-          AppointmentHelper.getDifference(
-                      appointment.actualStartTime, appointment.actualEndTime)
-                  .inDays >
-              0) {
+          AppointmentHelper.isSpannedToNextDay(
+            appointment.startTime.add(appointment.etaDuration),
+            appointment.actualEndTime, 
+            appointment.isAllDay)) {
         allDayAppointments.add(appointment);
       }
     }
@@ -5447,8 +5447,10 @@ class _SfCalendarState extends State<SfCalendar>
   /// Agenda view used on month and schedule calendar view.
   bool _isAllDayAppointmentView(CalendarAppointment appointment) {
     return appointment.isAllDay ||
-        appointment.isSpanned ||
-        appointment.actualStartTime.day != appointment.actualEndTime.day;
+       AppointmentHelper.isSpannedToNextDay(
+          appointment.startTime.add(appointment.etaDuration),
+          appointment.actualEndTime,
+          appointment.isAllDay);
   }
 
   /// Return the all day appointment count from appointment collection.

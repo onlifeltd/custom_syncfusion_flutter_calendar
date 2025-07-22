@@ -970,6 +970,7 @@ class CalendarAppointment {
     this.color = Colors.lightBlue,
     this.isSpanned = false,
     this.recurrenceExceptionDates,
+    this.etaDuration = Duration.zero,
   })  : actualStartTime = startTime,
         actualEndTime = endTime;
 
@@ -977,6 +978,15 @@ class CalendarAppointment {
   ///
   /// Defaults to `DateTime.now()`.
   DateTime startTime;
+
+  /// The estimated time of arrival duration for the [CalendarAppointment].
+  ///
+  /// This field can be used to store additional duration information
+  /// related to the appointment, such as travel time or preparation time.
+  ///
+  /// Defaults to `Duration.zero`.
+  final Duration etaDuration;
+
 
   /// The end time for an [CalendarAppointment] in [SfCalendar].
   ///
@@ -1093,6 +1103,7 @@ class CalendarAppointment {
         endTimeZone: endTimeZone,
         notes: notes,
         location: location,
+        etaDuration: etaDuration,
         recurrenceExceptionDates: recurrenceExceptionDates);
   }
 
@@ -1132,6 +1143,7 @@ class CalendarAppointment {
         otherAppointment.subject == subject &&
         otherAppointment.color == color &&
         otherAppointment.recurrenceRule == recurrenceRule &&
+        otherAppointment.etaDuration == etaDuration &&
         CalendarViewHelper.isDateCollectionEqual(
             otherAppointment.recurrenceExceptionDates,
             recurrenceExceptionDates);
@@ -1161,6 +1173,7 @@ class CalendarAppointment {
       recurrenceExceptionDates == null
           ? null
           : Object.hashAll(recurrenceExceptionDates!),
+      etaDuration,
     );
   }
 }

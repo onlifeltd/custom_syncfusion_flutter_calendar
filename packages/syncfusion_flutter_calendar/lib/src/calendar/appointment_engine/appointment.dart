@@ -85,6 +85,7 @@ class Appointment with Diagnosticable {
     this.subject = '',
     this.color = Colors.lightBlue,
     this.recurrenceExceptionDates,
+    this.etaDuration = Duration.zero
   })  : notes = notes != null && notes.contains('isOccurrenceAppointment')
             ? notes.replaceAll('isOccurrenceAppointment', '')
             : notes,
@@ -145,6 +146,29 @@ class Appointment with Diagnosticable {
   /// }
   ///  ```
   DateTime startTime;
+
+  /// The estimated time of arrival duration for the [Appointment].
+  ///
+  /// This field can be used to store additional duration information
+  /// related to the appointment, such as travel time or preparation time.
+  ///
+  /// Defaults to `Duration.zero`.
+  ///
+  /// See also:
+  /// * [CalendarDataSource.getEtaDuration], which maps the custom business
+  /// objects corresponding property to this property.
+  /// * [startTime], the date time value in which the appointment will start.
+  /// * [endTime], the date time value in which the appointment will end.
+  ///
+  /// ```dart
+  /// Appointment(
+  ///   startTime: DateTime.now(),
+  ///   endTime: DateTime.now().add(Duration(hours: 2)),
+  ///   subject: 'Meeting',
+  ///   etaDuration: Duration(minutes: 30), // 30 minutes travel time
+  /// )
+  /// ```
+  final Duration etaDuration;
 
   /// The end time for an [Appointment] in [SfCalendar].
   ///
@@ -979,6 +1003,7 @@ class Appointment with Diagnosticable {
         otherStyle.recurrenceExceptionDates == recurrenceExceptionDates &&
         otherStyle.recurrenceId == recurrenceId &&
         otherStyle.id == id &&
+        otherStyle.etaDuration == etaDuration &&
         otherStyle.appointmentType == appointmentType;
   }
 
@@ -1003,6 +1028,7 @@ class Appointment with Diagnosticable {
       endTime,
       subject,
       color,
+      etaDuration,
       recurrenceExceptionDates == null
           ? null
           : Object.hashAll(recurrenceExceptionDates!),
@@ -1025,6 +1051,7 @@ class Appointment with Diagnosticable {
         .add(EnumProperty<AppointmentType>('appointmentType', appointmentType));
     properties.add(DiagnosticsProperty<DateTime>('startTime', startTime));
     properties.add(DiagnosticsProperty<DateTime>('endTime', endTime));
+    properties.add(DiagnosticsProperty<Duration>('etaDuration', etaDuration));
     properties.add(IterableDiagnostics<DateTime>(recurrenceExceptionDates)
         .toDiagnosticsNode(name: 'recurrenceExceptionDates'));
     properties.add(IterableDiagnostics<Object>(resourceIds)
