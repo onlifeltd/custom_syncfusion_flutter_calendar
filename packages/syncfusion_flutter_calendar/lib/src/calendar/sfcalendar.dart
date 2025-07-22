@@ -4957,10 +4957,11 @@ class _SfCalendarState extends State<SfCalendar>
         <CalendarAppointment>[];
     for (final CalendarAppointment appointment in _visibleAppointments) {
       if (appointment.isAllDay ||
-          AppointmentHelper.isSpannedToNextDay(
-            appointment.actualStartTime.add(appointment.etaDuration),
-            appointment.actualEndTime, 
-            appointment.isAllDay)) {
+          AppointmentHelper.getDifference(
+                  appointment.actualStartTime.add(appointment.etaDuration),
+                  appointment.actualEndTime)
+              .inDays >
+              0) {
         allDayAppointments.add(appointment);
       }
     }
