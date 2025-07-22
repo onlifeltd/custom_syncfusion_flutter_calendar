@@ -5448,10 +5448,8 @@ class _SfCalendarState extends State<SfCalendar>
   /// Agenda view used on month and schedule calendar view.
   bool _isAllDayAppointmentView(CalendarAppointment appointment) {
     return appointment.isAllDay ||
-       AppointmentHelper.isSpannedToNextDay(
-          appointment.actualStartTime.add(appointment.etaDuration),
-          appointment.actualEndTime,
-          appointment.isAllDay);
+       appointment.isSpanned ||
+       !isSameDate(appointment.actualStartTime.add(appointment.etaDuration), appointment.actualEndTime);
   }
 
   /// Return the all day appointment count from appointment collection.

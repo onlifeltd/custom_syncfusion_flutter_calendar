@@ -67,12 +67,13 @@ class AppointmentHelper {
   }
 
   static bool _isSpanned(CalendarAppointment appointment) {
-    return !(appointment.actualEndTime.day == appointment.actualStartTime.day &&
+    final actualStartTime = appointment.actualStartTime.add(appointment.etaDuration);
+    return !(appointment.actualEndTime.day == actualStartTime.day &&
             appointment.actualEndTime.month ==
-                appointment.actualStartTime.month &&
+                actualStartTime.month &&
             appointment.actualEndTime.year ==
-                appointment.actualStartTime.year) &&
-        getDifference(appointment.actualStartTime, appointment.actualEndTime)
+                actualStartTime.year) &&
+        getDifference(actualStartTime, appointment.actualEndTime)
                 .inDays >
             0;
   }
@@ -500,17 +501,6 @@ class AppointmentHelper {
     }
 
     return getLocation(windowsTimeZoneId);
-  }
-
-  /// Check if appointment spans to next day based on original start time (without etaDuration)
-  static bool isSpannedToNextDay(DateTime startTime, DateTime endTime, bool isAllDay) {
-    if (isAllDay) {
-      return true;
-    }
-    
-    // Use the provided startTime (which should already have etaDuration removed) 
-    // to determine if appointment spans multiple days
-    return !isSameDate(startTime, endTime);
   }
 
   /// Method returns the date time of the provided timezone.
