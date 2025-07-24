@@ -305,6 +305,7 @@ class AppointmentHelper {
         notes: appointment.notes,
         location: appointment.location,
         isSpanned: appointment.isSpanned,
+        etaDuration: appointment.etaDuration,
         resourceIds: CalendarViewHelper.cloneList(appointment.resourceIds),
         recurrenceId: appointment.recurrenceId,
         id: appointment.id);
@@ -1044,7 +1045,7 @@ class AppointmentHelper {
                       appointment.exactEndTime.month) &&
               appointment.exactStartTime.isBefore(appointment.exactEndTime) &&
               getDifference(
-                          appointment.exactStartTime, appointment.exactEndTime)
+                          appointment.exactStartTime.add(appointment.etaDuration), appointment.exactEndTime)
                       .inDays ==
                   0 &&
               (appointment.exactEndTime.hour != 0 ||
@@ -1261,7 +1262,7 @@ class AppointmentHelper {
         : convertTimeToAppointmentTimeZone(occurrenceAppointment.actualEndTime,
             calendarTimeZone, occurrenceAppointment.endTimeZone);
     occurrenceAppointment.isSpanned = _isSpanned(occurrenceAppointment) &&
-        getDifference(occurrenceAppointment.startTime,
+        getDifference(occurrenceAppointment.startTime.add(occurrenceAppointment.etaDuration),
                     occurrenceAppointment.endTime)
                 .inDays >
             0;
@@ -1310,7 +1311,7 @@ class AppointmentHelper {
         calendarAppointmentCollection.add(item);
 
         item.isSpanned = _isSpanned(item) &&
-            getDifference(appStartTime, appEndTime).inDays > 0;
+            getDifference(appStartTime.add(item.etaDuration), appEndTime).inDays > 0;
       }
     } else {
       for (int i = 0; i < dataSource.length; i++) {
@@ -1321,7 +1322,7 @@ class AppointmentHelper {
         final DateTime appStartTime = app.startTime;
         final DateTime appEndTime = app.endTime;
         app.isSpanned = _isSpanned(app) &&
-            getDifference(appStartTime, appEndTime).inDays > 0;
+            getDifference(appStartTime.add(item.etaDuration), appEndTime).inDays > 0;
         calendarAppointmentCollection.add(app);
       }
     }
@@ -1347,6 +1348,7 @@ class AppointmentHelper {
           recurrenceExceptionDates: appointmentObject.recurrenceExceptionDates,
           resourceIds: appointmentObject.resourceIds,
           recurrenceId: appointmentObject.recurrenceId,
+          etaDuration: appointmentObject.etaDuration,
           id: appointmentObject.id);
     } else {
       final int index = calendarData.appointments!.indexOf(appointmentObject);
@@ -1365,6 +1367,7 @@ class AppointmentHelper {
               calendarData.getRecurrenceExceptionDates(index),
           resourceIds: calendarData.getResourceIds(index),
           recurrenceId: calendarData.getRecurrenceId(index),
+          etaDuration: calendarData.getEtaDuration(index) ?? Duration.zero,
           id: calendarData.getId(index));
     }
 

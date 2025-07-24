@@ -673,7 +673,7 @@ class _AppointmentLayoutState extends State<AppointmentLayout> {
       if (column == -1 ||
           appointment.isSpanned ||
           AppointmentHelper.getDifference(
-                      appointment.startTime, appointment.endTime)
+                      appointment.startTime.add(appointment.etaDuration), appointment.endTime)
                   .inDays >
               0 ||
           appointment.isAllDay) {

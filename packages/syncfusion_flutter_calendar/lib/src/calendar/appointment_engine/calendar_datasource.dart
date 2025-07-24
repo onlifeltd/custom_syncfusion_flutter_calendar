@@ -926,6 +926,8 @@ abstract class CalendarDataSource<T extends Object?>
   /// ```
   Object? getRecurrenceId(int index) => null;
 
+  Duration? getEtaDuration(int index) => null;
+
   /// Maps the custom appointments id to the [Appointment].
   ///
   /// Allows to set the custom appointments corresponding property to the

@@ -51,46 +51,36 @@ class _MyHomePageState extends State<MyHomePage> {
                     // by default the month appointment display mode set as Indicator, we can
                     // change the display mode as appointment using the appointment display
                     // mode property
-                                allowAppointmentResize: true,
-            headerHeight: 0,
-            viewHeaderHeight: 0,
-            showCurrentTimeIndicator: true,
-            allowDragAndDrop: true,
-            selectionDecoration: const BoxDecoration(color: Colors.transparent),
-                    onTap: (CalendarTapDetails details) {
-                      if (details.targetElement == CalendarElement.appointment && 
-                          details.tapOffsetData != null) {
-                        final tapData = details.tapOffsetData!;
-                        
-                        print('appointmentTapOffset: ${tapData.appointmentTapOffset}');
-                        print('appointmentSize: ${tapData.appointmentSize}');
-                        print('appointmentOffset: ${tapData.appointmentOffset}');
-                      }
-                    },
-                    monthViewSettings: const MonthViewSettings(
-                appointmentDisplayMode: MonthAppointmentDisplayMode.appointment),
+                    allowAppointmentResize: true,
+                    headerHeight: 0,
+                    viewHeaderHeight: 0,
+                    allowDragAndDrop: true,
+                    selectionDecoration: const BoxDecoration(color: Colors.transparent),                   
                   ),
             ),
           ],
         ),);
   }
 
-  List<Meeting> _getDataSource() {
-    final List<Meeting> meetings = <Meeting>[];
-    final DateTime today = DateTime.now();
-    final DateTime startTime = DateTime(today.year, today.month, today.day, 9);
-    final DateTime endTime = startTime.add(const Duration(hours: 2));
-    meetings.add(Meeting(
-        'Conference', startTime, endTime, const Color(0xFF0F8644), false));
-    meetings.add(Meeting(
-        'Conference', DateTime(today.year, today.month, today.day) ,  DateTime(today.year, today.month, today.day).add(const Duration(hours: 1)), const Color(0xFF0F8644), false));
-    meetings.add(Meeting(
-        'All day event', startTime, endTime, const Color(0xFFAF3654), true));
-    meetings.add(Meeting(
-        'All day event 22', startTime, endTime, const Color(0xFFAF3654), true));
-    meetings.add(Meeting(
-        'All day event true', DateTime(today.year, today.month, today.day), DateTime(today.year, today.month, today.day).add(const Duration(hours: 10, minutes: 1)), const Color(0xFFAF3654), true));
-    return meetings;
+  List<Appointment> _getDataSource() {
+    final today = DateTime.now();
+    final startTime = DateTime(today.year, today.month, today.day, 14);
+    final endTime = startTime.add(const Duration(hours: 23));
+    const duration = Duration(hours: 12);
+
+
+    return [
+      Appointment(startTime: startTime.subtract(duration), endTime: endTime,
+        etaDuration: duration,
+        subject: 'Conference w duration', color: Colors.red,
+      ),
+      Appointment(startTime: startTime, endTime: startTime.add(const Duration(hours: 24)),
+        subject: 'Conference some', color: Colors.green,
+      ),
+      Appointment(startTime: startTime, endTime: startTime.add(const Duration(hours: 14)),
+        subject: 'Conference spanned', color: Colors.red,
+      ),
+    ];
   }
 }
 
@@ -100,44 +90,44 @@ class _MyHomePageState extends State<MyHomePage> {
 class MeetingDataSource extends CalendarDataSource {
   /// Creates a meeting data source, which used to set the appointment
   /// collection to the calendar
-  MeetingDataSource(List<Meeting> source) {
+  MeetingDataSource(List<Appointment> source) {
     appointments = source;
   }
 
-  @override
-  DateTime getStartTime(int index) {
-    return _getMeetingData(index).from;
-  }
+  // @override
+  // DateTime getStartTime(int index) {
+  //   return _getMeetingData(index).from;
+  // }
 
-  @override
-  DateTime getEndTime(int index) {
-    return _getMeetingData(index).to;
-  }
+  // @override
+  // DateTime getEndTime(int index) {
+  //   return _getMeetingData(index).to;
+  // }
 
-  @override
-  String getSubject(int index) {
-    return _getMeetingData(index).eventName;
-  }
+  // @override
+  // String getSubject(int index) {
+  //   return _getMeetingData(index).eventName;
+  // }
 
-  @override
-  Color getColor(int index) {
-    return _getMeetingData(index).background;
-  }
+  // @override
+  // Color getColor(int index) {
+  //   return _getMeetingData(index).background;
+  // }
 
-  @override
-  bool isAllDay(int index) {
-    return _getMeetingData(index).isAllDay;
-  }
+  // @override
+  // bool isAllDay(int index) {
+  //   return _getMeetingData(index).isAllDay;
+  // }
 
-  Meeting _getMeetingData(int index) {
-    final dynamic meeting = appointments![index];
-    late final Meeting meetingData;
-    if (meeting is Meeting) {
-      meetingData = meeting;
-    }
+  // Meeting _getMeetingData(int index) {
+  //   final dynamic meeting = appointments![index];
+  //   late final Meeting meetingData;
+  //   if (meeting is Meeting) {
+  //     meetingData = meeting;
+  //   }
 
-    return meetingData;
-  }
+  //   return meetingData;
+  // }
 }
 
 /// Custom business object class which contains properties to hold the detailed
