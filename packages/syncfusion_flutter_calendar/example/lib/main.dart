@@ -65,8 +65,8 @@ class _MyHomePageState extends State<MyHomePage> {
   List<Appointment> _getDataSource() {
     final today = DateTime.now();
     final startTime = DateTime(today.year, today.month, today.day, 14);
-    final endTime = startTime.add(const Duration(hours: 23));
-    const duration = Duration(hours: 12);
+    final endTime = startTime.add(const Duration(hours: 1));
+    const duration = Duration(hours: 2);
 
 
     return [
@@ -74,10 +74,10 @@ class _MyHomePageState extends State<MyHomePage> {
         etaDuration: duration,
         subject: 'Conference w duration', color: Colors.red,
       ),
-      Appointment(startTime: startTime, endTime: startTime.add(const Duration(hours: 24)),
-        subject: 'Conference some', color: Colors.green,
-      ),
-      Appointment(startTime: startTime, endTime: startTime.add(const Duration(hours: 14)),
+      // Appointment(startTime: startTime, endTime: startTime.add(const Duration(hours: 24)),
+      //   subject: 'Conference some', color: Colors.green,
+      // ),
+      Appointment(startTime: startTime, endTime: startTime.add(const Duration(hours: 22)),
         subject: 'Conference spanned', color: Colors.red,
       ),
     ];

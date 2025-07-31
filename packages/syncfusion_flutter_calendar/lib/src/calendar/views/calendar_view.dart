@@ -715,6 +715,8 @@ class _CustomCalendarScrollViewState extends State<CustomCalendarScrollView>
         widget.height,
         currentState.widget.visibleDates.length,
         widget.isMobilePlatform);
+    _dragDetails.value.timeInterval = CalendarViewHelper.getTimeInterval(
+        widget.calendar.timeSlotViewSettings);
     _dragDetails.value.appointmentView = appointmentView;
     _dragDifferenceOffset = null;
     final Offset appointmentPosition = Offset(
@@ -2046,6 +2048,7 @@ class _CustomCalendarScrollViewState extends State<CustomCalendarScrollView>
     _dragDetails.value.position.value = null;
     _dragDifferenceOffset = null;
     _dragDetails.value.timeIntervalHeight = null;
+    _dragDetails.value.timeInterval = null;
     currentState._hoveringAppointmentView = null;
     currentState._updateDraggingMouseCursor(false);
   }
@@ -12390,12 +12393,16 @@ class _DragPaintDetails {
       // ignore: unused_element_parameter
       this.draggingTime,
       // ignore: unused_element_parameter
-      this.timeIntervalHeight});
+      this.timeIntervalHeight,
+      // ignore: unused_element_parameter
+      this.timeInterval,
+      });
 
   AppointmentView? appointmentView;
   final ValueNotifier<Offset?> position;
   DateTime? draggingTime;
   double? timeIntervalHeight;
+  int? timeInterval;
 }
 
 @immutable
@@ -12979,8 +12986,14 @@ class _DraggingAppointmentRenderObject extends RenderBox
       return;
     }
 
+    final draggingEventEtaDuration = dragDetails.appointmentView?.appointment?.etaDuration ?? Duration.zero;
+    final timeInterval = _dragDetails.timeInterval ?? 0;
+    final timeIntervalHeight = _dragDetails.timeIntervalHeight ?? 0;
+    final minuteHeight = timeInterval == 0 ? 0 : timeIntervalHeight / timeInterval;
+    final etaDurationYHeight = draggingEventEtaDuration.inMinutes * minuteHeight;
+
     final TextSpan span = TextSpan(
-      text: DateFormat(dragAndDropSettings.indicatorTimeFormat).format(dragDetails.draggingTime!),
+      text: DateFormat(dragAndDropSettings.indicatorTimeFormat).format(dragDetails.draggingTime!.add(draggingEventEtaDuration)),
       style: calendarTheme.timeIndicatorTextStyle,
     );
     _textPainter.text = span;
@@ -13000,7 +13013,7 @@ class _DraggingAppointmentRenderObject extends RenderBox
         xPosition -= _textPainter.width;
       }
     } else {
-      yPosition = dragDetails.position.value!.dy;
+      yPosition = dragDetails.position.value!.dy + etaDurationYHeight;
       xPosition = (timeLabelSize - _textPainter.width) / 2;
       if (isRTL) {
         xPosition = (size.width - timeLabelSize) + xPosition;
